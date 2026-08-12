@@ -8,6 +8,7 @@ import { createTaskWindow, getTaskWindow, hideTaskWindow } from './windows/taskW
 import { registerTaskIpc } from './ipc/taskIpc'
 import { registerSettingsIpc } from './ipc/settingsIpc'
 import { registerWindowIpc } from './ipc/windowIpc'
+import { registerAIIpc } from './ipc/aiIpc'
 import { bindPetWindow, startNotifyService, stopNotifyService } from './services/notifyService'
 import { createTray, destroyTray } from './services/trayService'
 import { getSettings } from './services/storeService'
@@ -36,6 +37,7 @@ app.whenReady().then(async () => {
   registerTaskIpc()
   registerSettingsIpc()
   registerWindowIpc()
+  registerAIIpc()
 
   // 创建窗口
   const pet = createPetWindow()

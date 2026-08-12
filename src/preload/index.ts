@@ -48,6 +48,23 @@ const api = {
       ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, patch) as Promise<Settings>
   },
 
+  /** AI 相关 */
+  ai: {
+    chat: (prompt: string, context?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_CHAT, { prompt, context }) as Promise<
+        import('@shared/types').ChatResponse
+      >,
+    setKey: (apiKey: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_SET_KEY, apiKey) as Promise<Settings>,
+    getStatus: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AI_GET_STATUS) as Promise<{
+        enabled: boolean
+        hasKey: boolean
+      }>,
+    testConnection: () =>
+      ipcRenderer.invoke('ai:testConnection') as Promise<{ ok: boolean; message: string }>
+  },
+
   /** 应用信息 */
   app: {
     platform: process.platform

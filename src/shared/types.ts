@@ -43,6 +43,20 @@ export interface Settings {
   notifySound: boolean
   autoStart: boolean
   petPosition?: { x: number; y: number }
+  aiApiKey?: string
+  aiEnabled: boolean
+}
+
+/** AI 聊天请求 */
+export interface ChatRequest {
+  prompt: string
+  context?: string
+}
+
+/** AI 聊天响应 */
+export interface ChatResponse {
+  content: string
+  error?: string
 }
 
 /** 默认设置 */
@@ -51,7 +65,9 @@ export const DEFAULT_SETTINGS: Settings = {
   alwaysOnTop: true,
   enableNotify: true,
   notifySound: true,
-  autoStart: false
+  autoStart: false,
+  aiApiKey: '',
+  aiEnabled: false
 }
 
 /** 通知 payload（主进程 → 渲染进程） */

@@ -41,5 +41,8 @@ export const IPC_CHANNELS = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
   PET_TOGGLE_PANEL: 'pet:togglePanel',
-  PET_QUICK_ADD: 'pet:quickAdd'
+  PET_QUICK_ADD: 'pet:quickAdd',
+  AI_CHAT: 'ai:chat',
+  AI_SET_KEY: 'ai:setKey',
+  AI_GET_STATUS: 'ai:getStatus'
 } as const
