@@ -16,7 +16,8 @@
     "paths": {
       "@main/*": ["src/main/*"],
       "@shared/*": ["src/shared/*"]
-    }
+    },
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/main/**/*.ts",
