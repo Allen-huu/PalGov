@@ -19,7 +19,7 @@ const defaultData: DbSchema = {
   settings: { ...DEFAULT_SETTINGS }
 }
 
-let dbPromise: Promise<ReturnType<typeof JSONFilePreset<DbSchema>>> | null = null
+let dbPromise: ReturnType<typeof JSONFilePreset<DbSchema>> | null = null
 
 /** 获取 db 文件路径 */
 function getDbPath(): string {
@@ -29,18 +29,18 @@ function getDbPath(): string {
 /** 初始化数据库（懒加载单例） */
 async function getDb() {
   if (!dbPromise) {
-    dbPromise = JSONFilePreset<DbSchema>(getDbPath(), defaultData)
-    const db = await dbPromise
+    const instance = await JSONFilePreset<DbSchema>(getDbPath(), defaultData)
     // 兼容旧数据：若字段缺失则补默认值
-    if (!db.data.settings) {
-      db.data.settings = { ...DEFAULT_SETTINGS }
+    if (!instance.data.settings) {
+      instance.data.settings = { ...DEFAULT_SETTINGS }
     }
-    if (!Array.isArray(db.data.tasks)) {
-      db.data.tasks = []
+    if (!Array.isArray(instance.data.tasks)) {
+      instance.data.tasks = []
     }
-    await db.write()
+    await instance.write()
+    dbPromise = Promise.resolve(instance)
   }
-  return dbPromise!
+  return dbPromise
 }
 
 /** 获取所有任务 */

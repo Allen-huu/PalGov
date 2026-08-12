@@ -16,19 +16,12 @@ export const PetPage: React.FC = () => {
   React.useEffect(() => {
     window.pet.settings.get().then(setSettings)
 
-    // 监听到期提醒：切换为 alert 状态
+    // 监听到期提醒：切换为 alert 状态 5 秒
     const unsubscribe = window.pet.task.onNotify(() => {
       setState('alert')
+      setTimeout(() => setState('idle'), 5000)
     })
-
-    // 监听任务创建事件：切换为 happy 状态
-    const onHappy = () => setState('happy')
-    window.addEventListener('pet:happy', onHappy)
-
-    return () => {
-      unsubscribe()
-      window.removeEventListener('pet:happy', onHappy)
-    }
+    return unsubscribe
   }, [])
 
   const handleClick = () => {
@@ -48,11 +41,6 @@ export const PetPage: React.FC = () => {
   }
 
   const closeMenu = () => setMenuOpen(false)
-
-  // 状态动画结束回调
-  const handleStateEnd = () => {
-    setState('idle')
-  }
 
   if (!settings) return null
 
@@ -74,7 +62,6 @@ export const PetPage: React.FC = () => {
         skin={(settings.petSkin as PetSkin) || 'cat'}
         state={state}
         onMouseDown={onMouseDown}
-        onStateEnd={handleStateEnd}
       />
 
       {menuOpen && (
@@ -92,6 +79,7 @@ export const PetPage: React.FC = () => {
           }}
           onQuit={() => {
             closeMenu()
+            // 通过隐藏窗口模拟退出，实际退出由托盘菜单触发
             window.pet.window.hidePanel()
           }}
         />

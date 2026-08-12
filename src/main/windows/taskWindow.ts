@@ -8,9 +8,6 @@ import { getPetWindow } from './petWindow'
 
 let taskWindow: BrowserWindow | null = null
 
-/** 防抖标记：toggle 操作后短时间内忽略 blur 事件，避免竞态 */
-let skipBlurUntil = 0
-
 /** 创建任务面板窗口 */
 export function createTaskWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -75,18 +72,11 @@ export function toggleTaskWindow(): void {
     showTaskWindow()
     return
   }
-  // 标记：接下来 300ms 内的 blur 事件视为 toggle 的一部分，应忽略
-  skipBlurUntil = Date.now() + 300
   if (taskWindow.isVisible()) {
     hideTaskWindow()
   } else {
     showTaskWindow()
   }
-}
-
-/** 判断当前 blur 事件是否应被忽略（由 toggle 触发的场景） */
-export function shouldSkipBlur(): boolean {
-  return Date.now() < skipBlurUntil
 }
 
 /** 获取任务面板实例 */
