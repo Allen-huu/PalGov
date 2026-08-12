@@ -11,7 +11,7 @@ const sharedResolve = {
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['lowdb'] })],
     resolve: sharedResolve,
     build: {
       rollupOptions: {
@@ -22,7 +22,7 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['lowdb'] })],
     resolve: sharedResolve,
     build: {
       rollupOptions: {
