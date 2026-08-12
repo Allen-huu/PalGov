@@ -26,6 +26,7 @@ export const TaskPanelPage: React.FC = () => {
       dueAt = d.getTime()
     }
     await create({ title, note, dueAt })
+    window.dispatchEvent(new CustomEvent('pet:happy'))
     setTitle('')
     setNote('')
     setDueTime('')

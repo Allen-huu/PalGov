@@ -43,6 +43,7 @@ export default defineConfig({
   },
   renderer: {
     root: 'src/renderer',
+    base: './',
     build: {
       rollupOptions: {
         input: {
