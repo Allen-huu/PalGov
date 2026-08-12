@@ -5,14 +5,14 @@ export const APP_NAME = '桌面宠物任务助手'
 
 /** 宠物窗口尺寸 */
 export const PET_WINDOW_SIZE = {
-  width: 160,
-  height: 160
+  width: 120,
+  height: 120
 } as const
 
 /** 任务面板窗口尺寸 */
 export const TASK_PANEL_SIZE = {
-  width: 360,
-  height: 480
+  width: 340,
+  height: 200
 } as const
 
 /** 设置窗口尺寸 */
@@ -44,6 +44,7 @@ export const IPC_CHANNELS = {
   PET_QUICK_ADD: 'pet:quickAdd',
   SETTINGS_SHOW: 'settings:show',
   PET_HIDE: 'pet:hide',
+  PET_SHOW: 'pet:show',
   AI_CHAT: 'ai:chat',
   AI_SET_KEY: 'ai:setKey',
   AI_GET_STATUS: 'ai:getStatus'

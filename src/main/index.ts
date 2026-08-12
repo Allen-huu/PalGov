@@ -1,7 +1,7 @@
 /**
  * 主进程入口
  */
-import { app, BrowserWindow, globalShortcut } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { APP_NAME } from './config/constants'
 import { createPetWindow, showPetWindow } from './windows/petWindow'
 import { createTaskWindow, getTaskWindow, hideTaskWindow } from './windows/taskWindow'
@@ -13,6 +13,7 @@ import { bindPetWindow, startNotifyService, stopNotifyService } from './services
 import { createTray, destroyTray } from './services/trayService'
 import { getSettings } from './services/storeService'
 import { showSettingsWindow } from './windows/settingsWindow'
+import { registerShortcuts, unregisterAllShortcuts } from './services/shortcutService'
 
 // 禁用硬件加速在某些显卡下能让透明窗口更稳定（按需）
 // app.disableHardwareAcceleration()
@@ -46,10 +47,20 @@ app.whenReady().then(async () => {
   bindPetWindow(pet)
   createTaskWindow()
 
-  // 任务面板失焦自动隐藏
+  // 任务面板失焦自动隐藏（延迟 150ms，让宠物点击切换有机会先执行）
   const taskWin = getTaskWindow()
   if (taskWin) {
-    taskWin.on('blur', () => hideTaskWindow())
+    let blurTimer: ReturnType<typeof setTimeout> | null = null
+    taskWin.on('blur', () => {
+      blurTimer = setTimeout(() => {
+        if (taskWin && !taskWin.isFocused() && !taskWin.isDestroyed()) {
+          hideTaskWindow()
+        }
+      }, 150)
+    })
+    taskWin.on('focus', () => {
+      if (blurTimer) { clearTimeout(blurTimer); blurTimer = null }
+    })
   }
 
   // 创建托盘
@@ -61,10 +72,8 @@ app.whenReady().then(async () => {
   // 启动提醒服务
   startNotifyService()
 
-  // 全局快捷键：Ctrl+Shift+P 显示宠物
-  globalShortcut.register('CommandOrControl+Shift+P', () => {
-    showPetWindow()
-  })
+  // 根据设置注册全局快捷键
+  registerShortcuts()
 
   // macOS 隐藏 dock 图标（桌面宠物风格）
   if (process.platform === 'darwin') {
@@ -89,9 +98,9 @@ app.on('activate', () => {
 app.on('before-quit', async () => {
   stopNotifyService()
   destroyTray()
-  globalShortcut.unregisterAll()
+  unregisterAllShortcuts()
 })
 
 app.on('will-quit', () => {
-  globalShortcut.unregisterAll()
+  unregisterAllShortcuts()
 })

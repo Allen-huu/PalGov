@@ -1,33 +1,63 @@
 import React from 'react'
 import { useRouter } from '../router'
 
+const TABS = [
+  { key: 'notes', path: '/task-panel', label: '笔记', icon: '📋' },
+  { key: 'quiz', path: '/quiz', label: '答题', icon: '✏️' },
+  { key: 'wrong', path: '/wrong-book', label: '错题', icon: '📖' },
+] as const
+
 export const WrongBookPage: React.FC = () => {
-  const { navigate } = useRouter()
-  return <main style={styles.page}>
-    <header style={styles.header}>
-      <button onClick={() => navigate('/task-panel')} style={styles.back}>←</button>
-      <div><div style={styles.eyebrow}>噜噜的学习角</div><h1 style={styles.title}>错题本</h1></div>
-      <div style={styles.count}>0 题</div>
-    </header>
-    <nav style={styles.tabs}>
-      <button onClick={() => navigate('/task-panel')} style={styles.tab}>🗒 笔记</button>
-      <button onClick={() => navigate('/quiz')} style={styles.tab}>✦ 答题</button>
-      <button style={{ ...styles.tab, ...styles.active }}>↺ 错题本</button>
-    </nav>
-    <section style={styles.empty}>
-      <div style={styles.emoji}>🌱</div>
-      <h2 style={styles.emptyTitle}>错题本还很干净</h2>
-      <p style={styles.desc}>答题后答错的题目会自动收集到这里，方便你之后复习。</p>
-      <button onClick={() => navigate('/quiz')} style={styles.primary}>去答题</button>
-    </section>
+  const { navigate, path } = useRouter()
+  return <main style={s.root}>
+    <Sidebar path={path} navigate={navigate} />
+    <div style={s.content}>
+      <div style={s.empty}>
+        <div style={s.emoji}>🌱</div>
+        <h2 style={s.emptyTitle}>错题本还很干净</h2>
+        <p style={s.emptyDesc}>答题后答错的题目会自动收集到这里，方便你之后复习。</p>
+        <button onClick={() => navigate('/quiz')} className="btn-primary" style={{ marginTop: 14, fontSize: 12, padding: '7px 16px' }}>去答题</button>
+      </div>
+    </div>
   </main>
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  page: { width: '100%', height: '100%', padding: 18, background: 'linear-gradient(160deg,#fff9f0,#fff0db)', color: '#674c3d', overflowY: 'auto' },
-  header: { display: 'flex', alignItems: 'center', gap: 12 }, back: { width: 32, height: 32, borderRadius: 10, background: '#fff', color: '#8c6d59', fontSize: 18 },
-  eyebrow: { color: '#b59680', fontSize: 11 }, title: { margin: '2px 0 0', fontSize: 22, color: '#704d39' }, count: { marginLeft: 'auto', color: '#b59680', fontSize: 12 },
-  tabs: { display: 'flex', gap: 6, margin: '18px 0', padding: 4, background: 'rgba(255,255,255,.7)', border: '1px solid #f0dcc8', borderRadius: 13 },
-  tab: { flex: 1, padding: '9px 5px', borderRadius: 9, background: 'transparent', color: '#9c7d69', fontSize: 12 }, active: { background: '#f5b878', color: '#fff', fontWeight: 600 },
-  empty: { marginTop: 30, padding: '38px 24px', textAlign: 'center', background: 'rgba(255,255,255,.68)', border: '1px solid #f0dcc8', borderRadius: 18 }, emoji: { fontSize: 48 }, emptyTitle: { margin: '12px 0 8px', fontSize: 17 }, desc: { color: '#a98c78', fontSize: 12, lineHeight: 1.7 }, primary: { marginTop: 18, padding: '9px 20px', borderRadius: 10, background: '#f2aa63', color: '#fff', fontWeight: 600 }
+function Sidebar({ path, navigate }: { path: string; navigate: (to: string) => void }) {
+  const active = path === '/quiz' ? 'quiz' : path === '/wrong-book' ? 'wrong' : 'notes'
+  return (
+    <div style={sidebarStyle}>
+      {TABS.map((tab) => (
+        <button key={tab.key} onClick={() => navigate(tab.path)} style={{
+          ...sidebarItem,
+          background: active === tab.key ? 'var(--accent-bg)' : 'transparent',
+          color: active === tab.key ? 'var(--accent)' : 'var(--text-tertiary)',
+          fontWeight: active === tab.key ? 600 : 400,
+        }} title={tab.label}>
+          <span style={{ fontSize: 16 }}>{tab.icon}</span>
+          <span style={{ fontSize: 10, marginTop: 2 }}>{tab.label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const sidebarStyle: React.CSSProperties = {
+  width: 56, flexShrink: 0,
+  display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 4px',
+  borderRight: '1px solid var(--panel-border)',
+  background: 'rgba(0,0,0,0.02)',
+}
+const sidebarItem: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+  gap: 1, padding: '8px 4px', borderRadius: 10,
+  border: 'none', cursor: 'pointer', transition: 'all 0.15s ease',
+}
+
+const s: Record<string, React.CSSProperties> = {
+  root: { width: '100%', height: '100%', display: 'flex', background: 'var(--panel-bg)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' },
+  content: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 },
+  empty: { flex: 1, textAlign: 'center' as const, padding: '20px 16px', overflowY: 'auto', animation: 'fadeIn 0.3s ease' },
+  emoji: { fontSize: 36, marginBottom: 4 },
+  emptyTitle: { fontSize: 15, fontWeight: 700, margin: '4px 0 4px' },
+  emptyDesc: { color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1.5, marginTop: 4 },
 }

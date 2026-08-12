@@ -32,8 +32,8 @@ export interface TaskUpdateInput {
   patch: Partial<Omit<Task, 'id' | 'createdAt'>>
 }
 
-/** 宠物皮肤 */
-export type PetSkin = 'cat' | 'dog' | 'robot'
+/** 宠物皮肤（唯一角色：水豚噜噜） */
+export type PetSkin = 'capybara'
 
 /** 应用设置 */
 export interface Settings {
@@ -51,6 +51,18 @@ export interface Settings {
   aiTemperature: number
   aiSendTaskContext: boolean
   petVisible: boolean
+  /** 全局快捷键 */
+  shortcuts: ShortcutConfig
+}
+
+/** 快捷键配置 */
+export interface ShortcutConfig {
+  /** 显示/隐藏面板 */
+  togglePanel: string
+  /** 显示/隐藏宠物 */
+  togglePet: string
+  /** 打开设置 */
+  showSettings: string
 }
 
 /** AI 聊天请求 */
@@ -67,7 +79,7 @@ export interface ChatResponse {
 
 /** 默认设置 */
 export const DEFAULT_SETTINGS: Settings = {
-  petSkin: 'cat',
+  petSkin: 'capybara',
   alwaysOnTop: true,
   enableNotify: true,
   notifySound: true,
@@ -79,7 +91,12 @@ export const DEFAULT_SETTINGS: Settings = {
   aiModel: 'deepseek-chat',
   aiTemperature: 0.7,
   aiSendTaskContext: true,
-  petVisible: true
+  petVisible: true,
+  shortcuts: {
+    togglePanel: 'CommandOrControl+Shift+P',
+    togglePet: 'CommandOrControl+Shift+H',
+    showSettings: 'CommandOrControl+Shift+S'
+  }
 }
 
 /** 通知 payload（主进程 → 渲染进程） */

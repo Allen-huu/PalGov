@@ -10,6 +10,7 @@ import { showSettingsWindow } from '../windows/settingsWindow'
 export function registerWindowIpc(): void {
   ipcMain.on(IPC_CHANNELS.SETTINGS_SHOW, () => showSettingsWindow())
   ipcMain.on(IPC_CHANNELS.PET_HIDE, () => hidePetWindow())
+  ipcMain.on(IPC_CHANNELS.PET_SHOW, () => showPetWindow())
   // 拖拽宠物
   ipcMain.on(IPC_CHANNELS.WINDOW_DRAG, (_evt, args: { dx: number; dy: number }) => {
     dragPetWindow(args.dx, args.dy)

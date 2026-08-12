@@ -1,6 +1,7 @@
 import { ipcMain, app, BrowserWindow } from 'electron'
 import { IPC_CHANNELS } from '../config/constants'
 import { getSettings, setSettings } from '../services/storeService'
+import { applyShortcuts } from '../services/shortcutService'
 
 export function registerSettingsIpc(): void {
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, async () => {
@@ -18,6 +19,11 @@ export function registerSettingsIpc(): void {
       BrowserWindow.getAllWindows().forEach((win) => {
         win.setAlwaysOnTop(settings.alwaysOnTop)
       })
+    }
+
+    // 快捷键变更时重新注册
+    if (patch.shortcuts) {
+      applyShortcuts(patch.shortcuts)
     }
 
     return settings

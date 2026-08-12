@@ -24,7 +24,7 @@ export function showTaskWindow(): void {
   const pet = getPetWindow()
   if (pet) {
     const [px, py] = pet.getPosition()
-    taskWindow!.setPosition(px - 100, py - TASK_PANEL_SIZE.height - 10)
+    taskWindow!.setPosition(px - 20, py - TASK_PANEL_SIZE.height - 2)
   } else {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize
     taskWindow!.setPosition(width - TASK_PANEL_SIZE.width - 40, height - TASK_PANEL_SIZE.height - 40)

@@ -24,8 +24,19 @@ export function HashRouter({ children }: { children: React.ReactNode }) {
 
 export function Route({ path, element }: { path: string; element: React.ReactNode }) {
   const ctx = React.useContext(RouterContext)
-  if (path !== '*' && ctx.path !== path) return null
+  if (path === '*') return null // catch-all handled by Routes
+  if (ctx.path !== path) return null
   return <>{element}</>
+}
+
+export function Routes({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
+  const ctx = React.useContext(RouterContext)
+  const childrenArr = React.Children.toArray(children)
+  const matched = childrenArr.find((child: any) => child.props?.path === ctx.path)
+  if (matched) return <>{matched}</>
+  const catchAll = childrenArr.find((child: any) => child.props?.path === '*')
+  if (catchAll) return <>{catchAll}</>
+  return <>{fallback}</>
 }
 
 export function useRouter() {
