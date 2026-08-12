@@ -123,14 +123,17 @@ desktop-pet-tasks/
 │   │       ├── 📂 styles/
 │   │       │   └── global.css
 │   │       └── 📂 utils/
-│   │           └── date.ts
+│   │           ├── date.ts        #   日期工具
+│   │           └── asset.ts       #   资源路径解析
 │   │
 │   └── 📂 shared/                 # 🟣 主/渲染进程共享
 │       └── types.ts               # TypeScript 类型
 │
 ├── 📂 resources/                  # 应用资源
-│   ├── icon-preview.jpg           # 图标预览
-│   └── pet/                       # 宠物素材（可选）
+│   ├── icon.png                   # 通用图标
+│   ├── icon.ico                   # Windows 图标
+│   ├── icon.icns                  # macOS 图标
+│   └── tray-icon.png              # 托盘图标
 │
 ├── package.json
 ├── electron.vite.config.ts
