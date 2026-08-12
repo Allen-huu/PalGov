@@ -4,7 +4,7 @@
 import { app, BrowserWindow, globalShortcut } from 'electron'
 import { APP_NAME } from './config/constants'
 import { createPetWindow, showPetWindow } from './windows/petWindow'
-import { createTaskWindow, getTaskWindow, hideTaskWindow } from './windows/taskWindow'
+import { createTaskWindow, getTaskWindow, hideTaskWindow, shouldSkipBlur } from './windows/taskWindow'
 import { registerTaskIpc } from './ipc/taskIpc'
 import { registerSettingsIpc } from './ipc/settingsIpc'
 import { registerWindowIpc } from './ipc/windowIpc'
@@ -45,7 +45,10 @@ app.whenReady().then(async () => {
   // 任务面板失焦自动隐藏
   const taskWin = getTaskWindow()
   if (taskWin) {
-    taskWin.on('blur', () => hideTaskWindow())
+    taskWin.on('blur', () => {
+      if (shouldSkipBlur()) return
+      hideTaskWindow()
+    })
   }
 
   // 创建托盘
