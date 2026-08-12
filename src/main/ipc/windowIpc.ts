@@ -3,14 +3,21 @@
  */
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../config/constants'
-import { dragPetWindow, showPetWindow } from '../windows/petWindow'
+import { dragPetWindow, setPetPosition } from '../windows/petWindow'
 import { hideTaskWindow, showTaskWindow, toggleTaskWindow } from '../windows/taskWindow'
 import { showSettingsWindow } from '../windows/settingsWindow'
+import { setSettings } from '../services/storeService'
 
 export function registerWindowIpc(): void {
   // 拖拽宠物
   ipcMain.on(IPC_CHANNELS.WINDOW_DRAG, (_evt, args: { dx: number; dy: number }) => {
     dragPetWindow(args.dx, args.dy)
+  })
+
+  // 保存宠物位置
+  ipcMain.on(IPC_CHANNELS.PET_POSITION_SAVE, (_evt, args: { x: number; y: number }) => {
+    setPetPosition(args.x, args.y)
+    setSettings({ petPosition: { x: args.x, y: args.y } })
   })
 
   // 显隐任务面板
@@ -26,12 +33,13 @@ export function registerWindowIpc(): void {
     hideTaskWindow()
   })
 
-  // 快速添加任务：弹出任务面板并聚焦到输入框
-  ipcMain.on(IPC_CHANNELS.PET_QUICK_ADD, () => {
-    showTaskWindow()
-    // 渲染进程会监听窗口显示事件，并在 URL hash 中处理 focus
+  // 显示设置窗口
+  ipcMain.on(IPC_CHANNELS.WINDOW_SHOW_SETTINGS, () => {
+    showSettingsWindow()
   })
 
-  // 失焦隐藏任务面板
-  // 注意：在 taskWindow.ts 的 ready-to-show 中绑定 blur 事件
+  // 快速添加任务：弹出任务面板
+  ipcMain.on(IPC_CHANNELS.PET_QUICK_ADD, () => {
+    showTaskWindow()
+  })
 }
