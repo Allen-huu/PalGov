@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['lowdb'] })],
     resolve: {
       alias: {
         '@shared': resolve(__dirname, 'src/shared')
@@ -14,12 +14,16 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/main/index.ts')
+        },
+        external: (id: string) => {
+          if (id === 'lowdb' || id.startsWith('lowdb/')) return false
+          return id.startsWith('node_modules')
         }
       }
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['lowdb'] })],
     resolve: {
       alias: {
         '@shared': resolve(__dirname, 'src/shared')
@@ -29,6 +33,10 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload/index.ts')
+        },
+        external: (id: string) => {
+          if (id === 'lowdb' || id.startsWith('lowdb/')) return false
+          return id.startsWith('node_modules')
         }
       }
     }
