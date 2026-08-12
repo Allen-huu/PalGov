@@ -8,11 +8,9 @@ import { createTaskWindow, getTaskWindow, hideTaskWindow } from './windows/taskW
 import { registerTaskIpc } from './ipc/taskIpc'
 import { registerSettingsIpc } from './ipc/settingsIpc'
 import { registerWindowIpc } from './ipc/windowIpc'
-import { registerAnimationIpc, registerAnimationProtocol } from './ipc/animationIpc'
 import { bindPetWindow, startNotifyService, stopNotifyService } from './services/notifyService'
 import { createTray, destroyTray } from './services/trayService'
 import { getSettings } from './services/storeService'
-import { extractAllAnimations } from './services/animationService'
 
 // 禁用硬件加速在某些显卡下能让透明窗口更稳定（按需）
 // app.disableHardwareAcceleration()
@@ -28,24 +26,16 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(async () => {
-  // 先加载设置（用于后续同步访问）
-  await getSettings()
-
-  // 解压 ZIP 动画包到 userData 目录
-  try {
-    await extractAllAnimations()
-  } catch (e) {
-    console.error('[Animation] 解压动画包失败:', e)
-  }
-
-  // 注册自定义协议 pet:// 用于安全提供帧文件
-  registerAnimationProtocol()
+  // 应用设置：开机自启
+  const settings = await getSettings()
+  app.setLoginItemSettings({
+    openAtLogin: settings.autoStart
+  })
 
   // 注册所有 IPC handler
   registerTaskIpc()
   registerSettingsIpc()
   registerWindowIpc()
-  registerAnimationIpc()
 
   // 创建窗口
   const pet = createPetWindow()

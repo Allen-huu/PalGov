@@ -20,7 +20,6 @@ const defaultData: DbSchema = {
 }
 
 let dbPromise: ReturnType<typeof JSONFilePreset<DbSchema>> | null = null
-let cachedSettings: Settings | null = null
 
 /** 获取 db 文件路径 */
 function getDbPath(): string {
@@ -90,13 +89,7 @@ export async function deleteTask(id: string): Promise<boolean> {
 /** 获取设置 */
 export async function getSettings(): Promise<Settings> {
   const db = await getDb()
-  cachedSettings = { ...db.data.settings }
   return { ...db.data.settings }
-}
-
-/** 同步获取设置（返回缓存值，需先调用 getSettings 初始化） */
-export function getSettingsSync(): Settings {
-  return cachedSettings ?? { ...DEFAULT_SETTINGS }
 }
 
 /** 更新设置 */
@@ -104,6 +97,5 @@ export async function setSettings(patch: Partial<Settings>): Promise<Settings> {
   const db = await getDb()
   db.data.settings = { ...db.data.settings, ...patch }
   await db.write()
-  cachedSettings = { ...db.data.settings }
   return { ...db.data.settings }
 }

@@ -1,66 +1,56 @@
 /**
- * 动画资源加载工具
- * 通过 IPC 获取解压后的帧列表，支持逐帧播放
+ * 资源路径解析工具
+ * 优先加载 .png，不存在时回退到 .svg，再回退到空字符串（组件内用 inline SVG）
  */
 
-export interface AnimationData {
-  skin: string
-  state: string
-  frameCount: number
-  /** 帧 URL 列表（通过 pet:// 协议访问） */
-  frames: string[]
-}
+/** 缓存探测结果，避免重复请求 */
+const resolvedCache = new Map<string, string | null>()
 
-/** 动画帧缓存，避免重复 IPC 请求 */
-const frameCache = new Map<string, AnimationData>()
+/** 探测资源是否存在，返回可用的 URL（png > svg > null） */
+export async function resolveAsset(skin: string, state: string, frame: number): Promise<string | null> {
+  const key = `${skin}/${state}-${frame}`
+  if (resolvedCache.has(key)) return resolvedCache.get(key) ?? null
 
-/** 正在加载的 Promise 缓存，避免并发重复请求 */
-const loadingPromises = new Map<string, Promise<AnimationData>>()
+  const base = import.meta.env.BASE_URL || './'
+  const pngUrl = `${base}assets/pets/${skin}/${state}-${frame}.png`
+  const svgUrl = `${base}assets/pets/${skin}/${state}-${frame}.svg`
 
-/**
- * 加载指定皮肤和状态的帧数据
- */
-export function loadAnimation(skin: string, state: string): Promise<AnimationData> {
-  const key = `${skin}/${state}`
-
-  if (frameCache.has(key)) {
-    return Promise.resolve(frameCache.get(key)!)
-  }
-
-  if (loadingPromises.has(key)) {
-    return loadingPromises.get(key)!
-  }
-
-  const promise = window.pet.animation.getFrames(skin, state).then((data) => {
-    const anim: AnimationData = {
-      skin: data.skin,
-      state: data.state,
-      frameCount: data.frameCount,
-      frames: data.frames
+  for (const url of [pngUrl, svgUrl]) {
+    try {
+      const res = await fetch(url, { method: 'HEAD' })
+      if (res.ok) {
+        resolvedCache.set(key, url)
+        return url
+      }
+    } catch {
+      // 继续尝试下一个
     }
-    frameCache.set(key, anim)
-    loadingPromises.delete(key)
-    return anim
-  })
+  }
 
-  loadingPromises.set(key, promise)
-  return promise
+  resolvedCache.set(key, null)
+  return null
 }
 
-/**
- * 预加载某个皮肤的所有状态动画
- */
-export async function preloadAnimation(
-  skin: string,
-  states: string[] = ['idle', 'happy', 'alert']
-): Promise<void> {
-  await Promise.all(states.map((state) => loadAnimation(skin, state)))
+/** 获取资源 URL（同步，仅用于已缓存的资源） */
+export function getAssetUrl(skin: string, state: string, frame: number): string | null {
+  const key = `${skin}/${state}-${frame}`
+  return resolvedCache.get(key) ?? null
 }
 
-/**
- * 清除缓存（用于切换皮肤或热更新）
- */
-export function clearAnimationCache(): void {
-  frameCache.clear()
-  loadingPromises.clear()
+/** 预加载某个皮肤的所有帧（idle/happy/alert） */
+export async function preloadSkin(skin: string): Promise<void> {
+  const states: Array<{ name: string; frames: number }> = [
+    { name: 'idle', frames: 4 },
+    { name: 'happy', frames: 6 },
+    { name: 'alert', frames: 4 }
+  ]
+  const tasks: Promise<void>[] = []
+  for (const s of states) {
+    for (let i = 0; i < s.frames; i++) {
+      tasks.push(
+        resolveAsset(skin, s.name, i).then(() => {})
+      )
+    }
+  }
+  await Promise.all(tasks)
 }

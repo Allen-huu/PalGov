@@ -75,7 +75,7 @@ export const PetPage: React.FC = () => {
           }}
           onSettings={() => {
             closeMenu()
-            window.pet.window.showSettings()
+            window.open(`file://${location.pathname}#settings`, '_blank')
           }}
           onQuit={() => {
             closeMenu()

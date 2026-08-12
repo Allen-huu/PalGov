@@ -38,8 +38,7 @@ const api = {
     togglePanel: () => ipcRenderer.send(IPC_CHANNELS.PET_TOGGLE_PANEL),
     showPanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_SHOW_PANEL),
     hidePanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_HIDE_PANEL),
-    quickAdd: () => ipcRenderer.send(IPC_CHANNELS.PET_QUICK_ADD),
-    showSettings: () => ipcRenderer.send('window:showSettings')
+    quickAdd: () => ipcRenderer.send(IPC_CHANNELS.PET_QUICK_ADD)
   },
 
   /** 设置相关 */
@@ -47,21 +46,6 @@ const api = {
     get: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET) as Promise<Settings>,
     set: (patch: Partial<Settings>) =>
       ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, patch) as Promise<Settings>
-  },
-
-  /** 动画相关 */
-  animation: {
-    getFrames: (skin: string, state: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.ANIMATION_GET_FRAMES, { skin, state }) as Promise<{
-        skin: string
-        state: string
-        frameCount: number
-        frames: string[]
-      }>,
-    listSkins: () =>
-      ipcRenderer.invoke(IPC_CHANNELS.ANIMATION_LIST_SKINS) as Promise<
-        Array<{ skin: string; states: string[] }>
-      >
   },
 
   /** 应用信息 */
