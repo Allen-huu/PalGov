@@ -9,7 +9,7 @@ const resolvedCache = new Map<string, string | null>()
 /** 探测资源是否存在，返回可用的 URL（png > svg > null） */
 export async function resolveAsset(skin: string, state: string, frame: number): Promise<string | null> {
   const key = `${skin}/${state}-${frame}`
-  if (resolvedCache.has(key)) return resolvedCache.get(key)
+  if (resolvedCache.has(key)) return resolvedCache.get(key) ?? null
 
   const base = import.meta.env.BASE_URL || './'
   const pngUrl = `${base}assets/pets/${skin}/${state}-${frame}.png`
