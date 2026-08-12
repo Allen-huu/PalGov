@@ -12,6 +12,7 @@ import { registerAIIpc } from './ipc/aiIpc'
 import { bindPetWindow, startNotifyService, stopNotifyService } from './services/notifyService'
 import { createTray, destroyTray } from './services/trayService'
 import { getSettings } from './services/storeService'
+import { showSettingsWindow } from './windows/settingsWindow'
 
 // 禁用硬件加速在某些显卡下能让透明窗口更稳定（按需）
 // app.disableHardwareAcceleration()
@@ -41,6 +42,7 @@ app.whenReady().then(async () => {
 
   // 创建窗口
   const pet = createPetWindow()
+  if (!settings.petVisible) pet.hide()
   bindPetWindow(pet)
   createTaskWindow()
 
@@ -51,7 +53,7 @@ app.whenReady().then(async () => {
   }
 
   // 创建托盘
-  createTray(() => showPetWindow(), () => {
+  createTray(() => showPetWindow(), () => showSettingsWindow(), () => {
     stopNotifyService()
     destroyTray()
   })

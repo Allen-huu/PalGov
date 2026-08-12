@@ -3,11 +3,13 @@
  */
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../config/constants'
-import { dragPetWindow, showPetWindow } from '../windows/petWindow'
+import { dragPetWindow, hidePetWindow, showPetWindow } from '../windows/petWindow'
 import { hideTaskWindow, showTaskWindow, toggleTaskWindow } from '../windows/taskWindow'
 import { showSettingsWindow } from '../windows/settingsWindow'
 
 export function registerWindowIpc(): void {
+  ipcMain.on(IPC_CHANNELS.SETTINGS_SHOW, () => showSettingsWindow())
+  ipcMain.on(IPC_CHANNELS.PET_HIDE, () => hidePetWindow())
   // 拖拽宠物
   ipcMain.on(IPC_CHANNELS.WINDOW_DRAG, (_evt, args: { dx: number; dy: number }) => {
     dragPetWindow(args.dx, args.dy)

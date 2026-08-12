@@ -43,3 +43,7 @@ export function showPetWindow(): void {
   petWindow?.show()
   petWindow?.focus()
 }
+
+export function hidePetWindow(): void {
+  petWindow?.hide()
+}

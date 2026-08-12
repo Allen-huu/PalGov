@@ -1,8 +1,6 @@
 import { ChatRequest, ChatResponse, Settings } from '@shared/types'
 import { getSettings, setSettings } from './storeService'
 
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions'
-const MODEL_NAME = 'deepseek-chat'
 const MAX_RETRIES = 2
 const TIMEOUT_MS = 30000
 
@@ -34,16 +32,16 @@ export async function chatWithAI(request: ChatRequest): Promise<ChatResponse> {
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await fetch(DEEPSEEK_API_URL, {
+      const response = await fetch(`${settings.aiBaseUrl.replace(/\/$/, '')}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${settings.aiApiKey}`
         },
         body: JSON.stringify({
-          model: MODEL_NAME,
+          model: settings.aiModel,
           messages,
-          temperature: 0.7,
+          temperature: settings.aiTemperature,
           max_tokens: 2000
         }),
         signal: AbortSignal.timeout(TIMEOUT_MS)
@@ -108,14 +106,14 @@ export async function testConnection(): Promise<{ ok: boolean; message: string }
   }
 
   try {
-    const response = await fetch(DEEPSEEK_API_URL, {
+    const response = await fetch(`${settings.aiBaseUrl.replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${settings.aiApiKey}`
       },
       body: JSON.stringify({
-        model: MODEL_NAME,
+        model: settings.aiModel,
         messages: [{ role: 'user', content: 'ping' }],
         max_tokens: 10
       }),

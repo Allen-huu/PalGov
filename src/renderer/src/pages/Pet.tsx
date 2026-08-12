@@ -10,7 +10,7 @@ export const PetPage: React.FC = () => {
   const [settings, setSettings] = React.useState<Settings | null>(null)
   const [state, setState] = React.useState<PetState>('idle')
   const [menuOpen, setMenuOpen] = React.useState(false)
-  const [menuPos, setMenuPos] = React.useState({ x: 0, y: 0 })
+  const [menuPos, setMenuPos] = React.useState({ x: 8, y: 8 })
   const { onMouseDown, hasDragged } = useDrag()
 
   React.useEffect(() => {
@@ -36,7 +36,8 @@ export const PetPage: React.FC = () => {
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
+    // 宠物窗口只有 160px，菜单不能使用屏幕坐标，否则会被窗口边界裁切。
+    setMenuPos({ x: 8, y: 42 })
     setMenuOpen(true)
   }
 
@@ -75,7 +76,7 @@ export const PetPage: React.FC = () => {
           }}
           onSettings={() => {
             closeMenu()
-            window.open(`file://${location.pathname}#settings`, '_blank')
+            window.pet.window.showSettings()
           }}
           onQuit={() => {
             closeMenu()
@@ -116,7 +117,9 @@ const ContextMenu: React.FC<{
         position: 'fixed',
         left: x,
         top: y,
-        minWidth: 140,
+        width: 144,
+        maxHeight: 112,
+        overflow: 'hidden',
         background: 'var(--panel-bg)',
         border: '1px solid var(--panel-border)',
         borderRadius: 8,

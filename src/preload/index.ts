@@ -38,7 +38,9 @@ const api = {
     togglePanel: () => ipcRenderer.send(IPC_CHANNELS.PET_TOGGLE_PANEL),
     showPanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_SHOW_PANEL),
     hidePanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_HIDE_PANEL),
-    quickAdd: () => ipcRenderer.send(IPC_CHANNELS.PET_QUICK_ADD)
+    quickAdd: () => ipcRenderer.send(IPC_CHANNELS.PET_QUICK_ADD),
+    showSettings: () => ipcRenderer.send(IPC_CHANNELS.SETTINGS_SHOW),
+    hidePet: () => ipcRenderer.send(IPC_CHANNELS.PET_HIDE)
   },
 
   /** 设置相关 */

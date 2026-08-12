@@ -1,483 +1,165 @@
-# 桌面宠物任务助手 - 项目初步设计文档
+# 水豚噜噜桌面陪伴与任务助手设计方案
 
-> 版本：v0.1.0
-> 更新日期：2026-08-11
-> 作者：KPBL Team
+版本：v0.3
 
----
+## 1. 产品定位
 
-## 一、项目背景与目标
+本项目只使用一个核心角色：**水豚噜噜**。它不是可切换宠物集合，而是常驻桌面的陪伴入口，帮助用户记录笔记、管理待办，并为未来的答题和学习功能提供自然的交互载体。
 
-### 1.1 项目背景
+核心体验是：用户看到噜噜即可快速记录，完成任务能得到轻量动画反馈，需要学习时可以让噜噜出题、答题和总结。
 
-现代人在日常工作/学习中需要频繁切换多种任务管理工具（Todoist、滴答清单、便签等），
-但这些工具都需要主动打开窗口、点击菜单，使用成本较高；而桌面宠物作为常驻在桌面
-右下角的小角色，可以做到「随叫随到、不抢焦点、不打扰」，是天然的轻量任务提醒载体。
+产品关键词：单一角色、低打扰、快速记录、情绪反馈、学习陪伴、离线优先。
 
-### 1.2 项目目标
+## 2. 功能范围
 
-打造一款 **Windows 桌面端的桌面宠物 + 任务管理** 一体化应用，具备以下核心价值：
+### 2.1 当前功能
 
-- **常驻陪伴**：桌面宠物以透明窗口形式常驻屏幕角落，可拖拽、可置顶
-- **轻量任务**：右键宠物即可快速添加/查看今日任务，无需打开新窗口
-- **智能提醒**：到点弹气泡提醒，支持任务完成动画
-- **离线可用**：所有数据本地存储，零依赖云端
+- 桌面透明宠物窗口
+- 拖拽移动和位置记忆
+- 单击打开任务/笔记面板
+- 双击快速新增内容
+- 右键菜单：新增笔记、打开设置、隐藏宠物
+- 笔记/任务的新增、完成、删除和日期筛选
+- 到点提醒、系统托盘和开机启动
+- AI 助手配置：服务商、Base URL、模型、API Key、Temperature、任务上下文
+- 单击宠物打开的功能区包含并列的“笔记”“答题”“错题本”入口
 
-### 1.3 非目标（Non-Goals）
+### 2.2 未来功能
 
-- 不做云同步（v1 不做）
-- 不做移动端
-- 不做多人协作
-- 不做复杂日历视图
+- AI 根据笔记生成选择题、判断题和简答题
+- 基于用户错题生成复习题
+- 错题本：按主题查看错题、重新作答和查看解析
+- 题目难度、主题和每日题量设置
+- 答题结果统计、连续学习天数和知识薄弱点
+- 噜噜根据答题结果播放鼓励、思考或庆祝动画
 
----
+当前答题区域先提供页面框架、返回笔记入口和空状态提示；具体题型、生成方式和统计功能等产品规则由后续需求确定。
 
-## 二、功能需求
+## 3. 水豚噜噜角色设计
 
-### 2.1 核心功能模块
+- 暖棕色圆润身体，低重心，短腿，小耳朵
+- 固定绿色围巾或叶子配件，作为识别标志
+- 透明背景，所有动作保持相同画布和脚底基线
+- 表情简单清晰，缩小到桌面尺寸仍能识别
+- 性格安静、可靠、略有幽默感，不连续打扰用户
 
-| 模块 | 功能描述 | 优先级 |
-|------|---------|--------|
-| 宠物显示 | 透明置顶窗口显示宠物形象 | P0 |
-| 宠物拖拽 | 鼠标按住宠物可自由拖动到屏幕任意位置 | P0 |
-| 任务添加 | 右键菜单 → 添加任务（标题、时间、备注） | P0 |
-| 任务列表 | 点击宠物 → 弹出任务面板，展示今日任务 | P0 |
-| 任务完成 | 双击任务标记完成，播放完成动画 | P0 |
-| 任务删除 | 在任务面板中删除任务 | P0 |
-| 定时提醒 | 到点弹出气泡提醒 | P1 |
-| 开机自启 | 系统启动时自动运行 | P1 |
-| 设置面板 | 修改宠物形象、提醒声音、置顶等 | P1 |
-| 任务统计 | 今日完成数 / 待完成数显示 | P2 |
+不要继续维护 cat、dog、robot 等皮肤。角色类型应逐步收敛为 `capybara`，设置页只展示“水豚噜噜”。
 
-### 2.2 交互方式
+## 4. 交互设计
 
-- **左键单击宠物**：展开/收起任务面板
-- **左键双击宠物**：快速添加任务
-- **右键单击宠物**：弹出上下文菜单（添加任务、设置、退出）
-- **鼠标拖拽宠物**：移动宠物位置
-- **鼠标悬停宠物**：显示今日任务概要气泡
-- **任务项双击**：标记为已完成
-- **系统托盘图标**：右键退出/显示主窗口
+| 操作/事件 | 噜噜反馈 | 业务动作 |
+|---|---|---|
+| 单击 | 抬头/挥手 | 打开笔记面板 |
+| 双击 | 掏出便签 | 快速新增笔记 |
+| 右键 | 认真看向菜单 | 新增、设置、隐藏 |
+| 拖拽 | 四肢晃动，落地 | 保存宠物位置 |
+| 新增笔记 | 点头/记录 | 创建笔记 |
+| 完成笔记 | 开心蹦跳 | 标记完成 |
+| 到点提醒 | 举牌/敲铃 | 系统通知 |
+| 开始答题 | 思考 | 进入答题面板 |
+| 答对 | 庆祝 | 记录得分 |
+| 答错 | 安慰/提示 | 展示解析并加入复习 |
 
-### 2.3 用户流程图
+单击宠物后的功能区采用三个并列的顶部导航入口：笔记、答题、错题本。三个功能层级相同，不把答题设计成笔记的附属功能。答题和错题本当前先提供独立页面框架，后续可以分别扩展题目流程和错题复习流程。
 
-```
-启动应用
-   │
-   ▼
-宠物出现在屏幕右下角（默认位置，记忆上次位置）
-   │
-   ├──► 右键宠物 ──► 上下文菜单
-   │                    ├── 添加任务 ──► 弹出添加任务窗口
-   │                    ├── 设置
-   │                    └── 退出
-   │
-   ├──► 左键单击 ──► 展开/收起任务面板
-   │
-   ├──► 左键双击 ──► 快速添加任务输入框
-   │
-   └──► 悬停 ──► 显示"今日待办 X 项 / 已完成 Y 项"气泡
+右键菜单不能直接渲染到超出透明宠物窗口的区域。当前方案保持菜单在宠物窗口内部完整显示；若未来菜单内容增加，应改为独立的无边框菜单窗口或使用 Electron 原生 `Menu.popup`。
 
-任务到点 ──► 弹出气泡 + 宠物跳跃动画 + 系统通知
+## 5. 动画系统
+
+动画通过事件触发，不与任务业务代码耦合：
+
+```ts
+pet.play('task-complete')
+pet.play('quiz-correct')
+pet.play('reminder', { priority: 'urgent' })
 ```
 
----
+建议动作分类：
 
-## 三、技术选型
+- 日常：idle、breathing、blink、yawn、sleep
+- 笔记：write、think、task-complete、task-delete
+- 提醒：reminder、urgent-reminder、snooze、late
+- 答题：quiz-ready、quiz-think、quiz-correct、quiz-wrong、quiz-streak
+- 彩蛋：dance、watermelon、hot-spring、rainy-day
 
-### 3.1 技术栈总览
+动画优先级：urgent > system > interaction > ambient。日常动画可以被业务反馈打断，业务反馈结束后回到 idle。
 
-| 层级 | 技术 | 版本 | 选型理由 |
-|------|------|------|---------|
-| 桌面框架 | Electron | ^31.x | 跨平台、生态成熟、可打包 Windows 安装包 |
-| 构建工具 | Vite | ^5.x | 极速 HMR、ESM 原生支持 |
-| 渲染层框架 | React | ^18.x | 生态丰富、组件化便于维护 |
-| 语言 | TypeScript | ^5.x | 类型安全、IDE 智能提示 |
-| UI 组件库 | Tailwind CSS | ^3.x | 原子化 CSS、快速出样式 |
-| 本地存储 | lowdb (JSON) | ^7.x | 轻量、零依赖、便于调试查看数据 |
-| 进程通信 | electron ipcRenderer/ipcMain | - | 主进程负责文件 I/O，渲染进程负责 UI |
-| 打包工具 | electron-builder | ^24.x | 一键生成 .exe / .nsis 安装包 |
+设置页只保留当前已经接入的选项：宠物隐藏/显示、窗口置顶、任务提醒、提醒声音、AI 配置和开机启动。动画速度、宠物大小、日常动画开关等尚未接入实际播放控制的选项不应出现在设置中。
 
-### 3.2 备选方案对比
+## 6. AI 与答题设计
 
-**桌面框架：Electron vs Tauri**
-- Tauri 体积更小（< 10MB），但需要 Rust 环境，Windows 端 WebView2 兼容性问题
-- Electron 体积大（~80MB），但生态最成熟、Windows 体验最稳定，**选 Electron**
+AI 服务采用 OpenAI Chat Completions 兼容协议。配置项全部放入设置中心：
 
-**存储：lowdb vs SQLite**
-- SQLite 适合大数据量，但桌面宠物任务数据量极小（日 < 100 条）
-- lowdb 直接读写 JSON 文件，**开发调试方便、零依赖、选 lowdb**
+- 是否启用 AI
+- 服务商
+- API Base URL
+- 模型名称
+- API Key
+- Temperature
+- 是否发送任务/笔记上下文
 
----
-
-## 四、系统架构
-
-### 4.1 整体架构图
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                     Electron Application                     │
-│                                                              │
-│  ┌────────────────────────────┐  ┌─────────────────────────┐ │
-│  │      Main Process          │  │     Renderer Process    │ │
-│  │      (Node.js 环境)         │  │     (Chromium + React)  │ │
-│  │                             │  │                         │ │
-│  │  ┌───────────────────────┐ │  │  ┌───────────────────┐  │ │
-│  │  │  WindowManager        │ │  │  │  PetWindow        │  │ │
-│  │  │  - 创建透明窗口       │◄┼──┼──┤  - 宠物形象渲染   │  │ │
-│  │  │  - 窗口置顶/拖拽      │ │  │  │  - Lottie 动画    │  │ │
-│  │  └───────────────────────┘ │  │  └───────────────────┘  │ │
-│  │                             │  │                         │ │
-│  │  ┌───────────────────────┐ │  │  ┌───────────────────┐  │ │
-│  │  │  TaskService          │◄┼──┼──┤  TaskPanel       │  │ │
-│  │  │  - CRUD 任务          │ │  │  │  - 任务列表 UI    │  │ │
-│  │  │  - 读写 lowdb         │ │  │  │  - 添加/完成按钮  │  │ │
-│  │  └───────────────────────┘ │  │  └───────────────────┘  │ │
-│  │                             │  │                         │ │
-│  │  ┌───────────────────────┐ │  │  ┌───────────────────┐  │ │
-│  │  │  NotificationService  │◄┼──┼──┤  Bubble           │  │ │
-│  │  │  - 系统通知           │ │  │  │  - 提醒气泡       │  │ │
-│  │  │  - 定时器             │ │  │  └───────────────────┘  │ │
-│  │  └───────────────────────┘ │  │                         │ │
-│  │                             │  │  ┌───────────────────┐  │ │
-│  │  ┌───────────────────────┐ │  │  │  Tray             │  │ │
-│  │  │  TrayService          │◄┼──┼──┤  - 托盘菜单       │  │ │
-│  │  │  - 托盘图标 + 菜单    │ │  │  └───────────────────┘  │ │
-│  │  └───────────────────────┘ │  │                         │ │
-│  └────────────────────────────┘  └─────────────────────────┘ │
-│                                                              │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │                  IPC Bridge (preload)                   │  │
-│  │   contextBridge.exposeInMainWorld('pet', {...})         │  │
-│  └────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────┘
-
-         ▲                                    ▲
-         │                                    │
-         └────────────  IPC 通道 ─────────────┘
-         ipcRenderer.invoke  ◄──────────►  ipcMain.handle
-```
-
-### 4.2 进程职责划分
-
-#### Main Process（主进程，Node.js 环境）
-
-- 创建 BrowserWindow（宠物透明窗口、任务面板窗口、设置窗口）
-- 管理窗口生命周期：创建、显示、隐藏、销毁
-- 文件 I/O：读写本地 JSON 数据库
-- 系统集成：托盘图标、系统通知、开机自启
-- 定时器：每分钟检查到期任务
-
-#### Renderer Process（渲染进程，Chromium + React）
-
-- 渲染宠物形象（SVG/Lottie 动画）
-- 渲染任务面板、设置面板 UI
-- 处理用户交互：点击、拖拽、双击
-- 通过 `window.pet` API 调用主进程能力
-
-#### Preload Script（预加载脚本）
-
-- 使用 `contextBridge` 暴露安全的 IPC API 给渲染进程
-- 隔离 Node.js API，避免 XSS 风险
-
-### 4.3 IPC 通道设计
-
-| 通道名 | 方向 | 参数 | 返回值 | 说明 |
-|--------|------|------|--------|------|
-| `task:list` | renderer → main | `{ date?: string }` | `Task[]` | 获取指定日期任务 |
-| `task:create` | renderer → main | `TaskInput` | `Task` | 创建任务 |
-| `task:update` | renderer → main | `{ id, patch }` | `Task` | 更新任务 |
-| `task:delete` | renderer → main | `{ id }` | `boolean` | 删除任务 |
-| `task:toggleDone` | renderer → main | `{ id }` | `Task` | 切换完成状态 |
-| `window:drag` | renderer → main | `{ dx, dy }` | void | 拖拽宠物 |
-| `notify:show` | main → renderer | `NotifyPayload` | - | 通知渲染进程显示气泡 |
-| `settings:get` | renderer → main | - | `Settings` | 获取设置 |
-| `settings:set` | renderer → main | `Partial<Settings>` | `Settings` | 更新设置 |
-
----
-
-## 五、模块设计
-
-### 5.1 目录结构
-
-```
-desktop-pet/
-├── docs/                       # 项目文档
-│   ├── DESIGN.md               # 设计文档（本文件）
-│   └── assets/                 # 文档图片资源
-├── src/
-│   ├── main/                   # 主进程代码
-│   │   ├── index.ts            # 主进程入口
-│   │   ├── windows/
-│   │   │   ├── petWindow.ts    # 宠物窗口管理
-│   │   │   ├── taskWindow.ts   # 任务面板窗口
-│   │   │   └── settingsWindow.ts
-│   │   ├── services/
-│   │   │   ├── taskService.ts  # 任务数据 CRUD
-│   │   │   ├── notifyService.ts # 提醒服务
-│   │   │   ├── trayService.ts  # 托盘服务
-│   │   │   └── storeService.ts # lowdb 封装
-│   │   ├── ipc/
-│   │   │   ├── taskIpc.ts      # 任务相关 IPC handler
-│   │   │   ├── settingsIpc.ts
-│   │   │   └── windowIpc.ts
-│   │   └── config/
-│   │       └── constants.ts    # 常量定义
-│   │
-│   ├── preload/                # 预加载脚本
-│   │   └── index.ts            # contextBridge 暴露 API
-│   │
-│   ├── renderer/               # 渲染进程代码
-│   │   ├── index.html          # HTML 入口
-│   │   ├── src/
-│   │   │   ├── main.tsx        # React 入口
-│   │   │   ├── App.tsx         # 根组件
-│   │   │   ├── pages/
-│   │   │   │   ├── Pet.tsx     # 宠物页（透明窗口）
-│   │   │   │   ├── TaskPanel.tsx # 任务面板
-│   │   │   │   └── Settings.tsx # 设置页
-│   │   │   ├── components/
-│   │   │   │   ├── PetSprite.tsx # 宠物精灵动画
-│   │   │   │   ├── TaskItem.tsx
-│   │   │   │   ├── Bubble.tsx   # 提醒气泡
-│   │   │   │   └── ContextMenu.tsx
-│   │   │   ├── hooks/
-│   │   │   │   ├── useTask.ts  # 任务数据 hook
-│   │   │   │   └── useDrag.ts   # 拖拽 hook
-│   │   │   ├── styles/
-│   │   │   │   └── global.css
-│   │   │   ├── types/
-│   │   │   │   └── task.ts      # TypeScript 类型定义
-│   │   │   └── utils/
-│   │   │       └── date.ts
-│   │   └── vite.config.ts
-│   │
-│   └── shared/                 # 主进程/渲染进程共享类型
-│       └── types.ts
-│
-├── resources/                  # 应用资源
-│   ├── icon.ico                # 应用图标
-│   ├── tray-icon.png           # 托盘图标
-│   └── pet/                    # 宠物素材
-│       ├── idle.svg            # 待机状态
-│       ├── happy.svg           # 完成任务动画
-│       └── alert.svg           # 提醒动画
-│
-├── electron-builder.yml        # 打包配置
-├── electron.vite.config.ts     # electron-vite 配置
-├── package.json
-├── tsconfig.json
-├── tsconfig.node.json
-├── .gitignore
-└── README.md
-```
-
-### 5.2 关键模块详细设计
-
-#### 5.2.1 PetWindow（宠物窗口）
-
-```typescript
-// src/main/windows/petWindow.ts 关键设计
-new BrowserWindow({
-  width: 160,
-  height: 160,
-  frame: false,           // 无边框
-  transparent: true,      // 透明背景
-  resizable: false,
-  alwaysOnTop: true,      // 置顶
-  skipTaskbar: true,      // 不在任务栏显示
-  hasShadow: false,
-  webPreferences: {
-    preload: join(__dirname, '../preload/index.js'),
-    contextIsolation: true,
-    nodeIntegration: false,
-  }
-})
-```
-
-- 通过 `setIgnoreMouseEvents(false)` 处理点击穿透
-- 拖拽通过监听渲染进程 `mouse-down` 事件 + 主进程 `window.setPosition` 实现
-
-#### 5.2.2 TaskService（任务服务）
-
-```typescript
-interface Task {
-  id: string;            // UUID
-  title: string;         // 任务标题（必填）
-  note?: string;         // 备注
-  dueAt?: number;        // 到期时间戳（可选）
-  done: boolean;         // 是否完成
-  createdAt: number;     // 创建时间
-  updatedAt: number;     // 更新时间
-  date: string;          // 归属日期 YYYY-MM-DD
-}
-```
-
-- 使用 lowdb 存储到 `app.getPath('userData')/tasks.json`
-- 每次写操作通过 `db.write()` 持久化
-- 主进程启动时初始化 db，注册 IPC handler
-
-#### 5.2.3 NotifyService（提醒服务）
-
-- 主进程启动 `setInterval` 每 30 秒检查一次任务
-- 触发条件：`task.dueAt <= now && !task.done && !task.notified`
-- 触发动作：
-  1. `Notification` 系统通知
-  2. 通过 IPC 通知渲染进程显示气泡 + 播放跳跃动画
-  3. 标记 `task.notified = true` 避免重复提醒
-
----
-
-## 六、数据模型
-
-### 6.1 任务数据
-
-```typescript
-// src/shared/types.ts
-export interface Task {
-  id: string;
-  title: string;
-  note?: string;
-  dueAt?: number;
-  done: boolean;
-  notified: boolean;
-  createdAt: number;
-  updatedAt: number;
-  date: string;        // YYYY-MM-DD 用于按日查询
-}
-
-export interface TaskInput {
-  title: string;
-  note?: string;
-  dueAt?: number;
-  date?: string;        // 不传默认今天
-}
-```
-
-### 6.2 设置数据
-
-```typescript
-export interface Settings {
-  petSkin: 'cat' | 'dog' | 'robot';   // 宠物皮肤
-  alwaysOnTop: boolean;                // 置顶
-  enableNotify: boolean;               // 提醒开关
-  notifySound: boolean;                // 提醒声音
-  autoStart: boolean;                  // 开机自启
-  petPosition?: { x: number; y: number }; // 上次位置
-}
-```
-
-### 6.3 数据库文件结构（tasks.json）
+AI 不应直接返回文件路径、执行代码或未审核的动画指令。答题功能应使用结构化 JSON：
 
 ```json
 {
-  "tasks": [
-    {
-      "id": "uuid-xxx",
-      "title": "完成设计文档",
-      "note": "周一前提交",
-      "dueAt": 1786500000000,
-      "done": false,
-      "notified": false,
-      "createdAt": 1786400000000,
-      "updatedAt": 1786400000000,
-      "date": "2026-08-11"
-    }
-  ],
-  "settings": {
-    "petSkin": "cat",
-    "alwaysOnTop": true,
-    "enableNotify": true,
-    "notifySound": true,
-    "autoStart": false
-  }
+  "type": "single_choice",
+  "question": "问题文本",
+  "options": ["A", "B", "C", "D"],
+  "answer": 1,
+  "explanation": "解析文本",
+  "sourceNoteId": "note-id"
 }
 ```
 
----
+答题流程：选择笔记/主题 → AI 生成题目 → 用户作答 → 展示解析 → 保存结果 → 生成复习计划。
 
-## 七、UI 设计
+## 7. 技术架构
 
-### 7.1 宠物形象
+- Electron Main：窗口、托盘、任务/笔记存储、通知、AI 请求
+- Preload：通过 `contextBridge` 暴露受控 API
+- Renderer：噜噜、笔记面板、设置页、答题页
+- lowdb：本地保存笔记、设置、答题记录
+- SVG/CSS：基础循环动画
+- Lottie/WebP：复杂动作和彩蛋
 
-- v1 使用 **SVG 矢量图** 实现（不依赖 Lottie，减少体积）
-- 三种状态：`idle`（待机）、`happy`（完成任务）、`alert`（提醒）
-- 待机状态有缓慢呼吸动画（CSS transform scale）
+设置变更必须通过 `settings:get` / `settings:set` 持久化。宠物显示状态使用 `petVisible`：隐藏后通过托盘“显示宠物”恢复。
 
-### 7.2 任务面板
+## 8. 开发优先级
 
-```
-┌─────────────────────────────────┐
-│  今日任务            2026-08-11 │
-│  ──────────────────────────────  │
-│  ☐ 完成设计文档                 │
-│  ☐ 开会 14:00                   │
-│  ☑ 买菜                  已完成  │
-│  ☐ 写代码                       │
-│  ──────────────────────────────  │
-│  [+ 添加任务]                    │
-└─────────────────────────────────┘
-```
+### M1：角色和笔记闭环
 
-- 圆角卡片、毛玻璃效果（`backdrop-filter: blur`）
-- 暗色主题为主，便于长时间使用
+- 统一水豚噜噜角色
+- 完成笔记 CRUD
+- 完成新增、完成、提醒动画
+- 设置中的隐藏/显示宠物
 
-### 7.3 提醒气泡
+### M2：稳定动画系统
 
-```
-   ┌──────────────────────┐
-   │ 📌 到点啦！           │
-   │  开会 14:00           │
-   │  [完成] [稍后提醒]    │
-   └──────────────────────┘
-            ▲
-            │
-         🐱 宠物
-```
+- 动画注册表
+- 优先级、队列、冷却和回 idle
+- 右键菜单独立窗口化
 
----
+### M3：AI 答题
 
-## 八、开发计划
+- 笔记转题目
+- 答题面板和结果记录
+- 错题复习
 
-### 8.1 里程碑
+### M4：陪伴成长
 
-| 阶段 | 内容 | 产出 |
-|------|------|------|
-| M0 | 项目搭建、文档、CI | 项目骨架、DESIGN.md、README.md |
-| M1 | 宠物窗口 + 拖拽 | 透明窗口、可拖拽宠物 |
-| M2 | 任务 CRUD + 面板 UI | 完整任务管理功能 |
-| M3 | 提醒 + 托盘 | 定时提醒、系统托盘 |
-| M4 | 设置 + 打包 | 设置面板、生成 .exe 安装包 |
+- 每日学习统计
+- 连续答题奖励
+- 主题动画包和节日彩蛋
 
-### 8.2 当前阶段（M0）交付物
+## 9. 验收标准
 
-- [x] 项目初步设计文档（本文件）
-- [x] 项目骨架代码
-- [x] README.md
-- [x] git 仓库初始化
+- 应用中只有水豚噜噜一个宠物角色
+- 隐藏后宠物窗口消失，托盘可恢复显示
+- 右键菜单不被窗口边界裁切
+- 笔记、提醒、AI 设置均可持久化
+- AI 失败时不影响笔记和答题记录
+- 新增动画只需注册动画 ID，不需修改业务流程
 
----
+## 三个并列功能区
 
-## 九、风险与待确认事项
-
-| 风险 | 影响 | 应对方案 |
-|------|------|---------|
-| Windows 透明窗口点击穿透问题 | 中 | 使用 `setIgnoreMouseEvents` + 前向/反向区域 |
-| Electron 体积过大（~80MB） | 低 | v1 接受，后续考虑 Tauri 重构 |
-| 多显示器分辨率适配 | 中 | 使用 `screen.getDisplayNearestPoint` 适配 |
-| 宠物素材版权 | 低 | v1 使用自绘 SVG，避免外部素材 |
-
-### 待确认
-
-- [ ] 宠物形象风格偏好（拟物 / 卡通 / 极简线条）
-- [ ] 是否需要多宠物切换
-- [ ] 任务是否需要分类（工作 / 学习 / 生活）
-
----
-
-## 十、参考资料
-
-- Electron 官方文档：https://www.electronjs.org/docs/latest
-- electron-vite 脚手架：https://electron-vite.org/
-- lowdb：https://github.com/typicode/lowdb
-- electron-builder：https://www.electron.build/
+单击宠物后，功能区提供三个同级入口：笔记、答题、错题本。笔记负责记录，答题负责练习，错题本负责复习。三个页面使用统一的顶部标签导航、暖色背景和圆角卡片视觉。答题页和错题本页先提供空状态与返回入口，后续再接入具体题型、题目生成和错题数据。

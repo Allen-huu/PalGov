@@ -45,6 +45,12 @@ export interface Settings {
   petPosition?: { x: number; y: number }
   aiApiKey?: string
   aiEnabled: boolean
+  aiProvider: 'deepseek' | 'openai-compatible'
+  aiBaseUrl: string
+  aiModel: string
+  aiTemperature: number
+  aiSendTaskContext: boolean
+  petVisible: boolean
 }
 
 /** AI 聊天请求 */
@@ -67,7 +73,13 @@ export const DEFAULT_SETTINGS: Settings = {
   notifySound: true,
   autoStart: false,
   aiApiKey: '',
-  aiEnabled: false
+  aiEnabled: false,
+  aiProvider: 'deepseek',
+  aiBaseUrl: 'https://api.deepseek.com/v1',
+  aiModel: 'deepseek-chat',
+  aiTemperature: 0.7,
+  aiSendTaskContext: true,
+  petVisible: true
 }
 
 /** 通知 payload（主进程 → 渲染进程） */

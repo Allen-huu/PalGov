@@ -24,7 +24,7 @@ export function HashRouter({ children }: { children: React.ReactNode }) {
 
 export function Route({ path, element }: { path: string; element: React.ReactNode }) {
   const ctx = React.useContext(RouterContext)
-  if (ctx.path !== path) return null
+  if (path !== '*' && ctx.path !== path) return null
   return <>{element}</>
 }
 
@@ -33,5 +33,7 @@ export function useRouter() {
 }
 
 function parseHash(): string {
-  return window.location.hash.replace(/^#/, '') || '/'
+  const value = window.location.hash.replace(/^#/, '')
+  if (!value) return '/'
+  return value.startsWith('/') ? value : `/${value}`
 }

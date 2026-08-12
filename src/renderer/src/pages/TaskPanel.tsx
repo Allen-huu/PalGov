@@ -5,6 +5,7 @@ import React from 'react'
 import { useTask } from '../hooks/useTask'
 import { TaskItem } from '../components/TaskItem'
 import { formatDateChinese, getTodayDate } from '../utils/date'
+import { useRouter } from '../router'
 
 export const TaskPanelPage: React.FC = () => {
   const { tasks, loading, create, toggleDone, remove } = useTask()
@@ -12,6 +13,7 @@ export const TaskPanelPage: React.FC = () => {
   const [note, setNote] = React.useState('')
   const [dueTime, setDueTime] = React.useState('')
   const [expanded, setExpanded] = React.useState(false)
+  const { navigate } = useRouter()
 
   const pending = tasks.filter((t) => !t.done)
   const done = tasks.filter((t) => t.done)
@@ -57,10 +59,17 @@ export const TaskPanelPage: React.FC = () => {
           justifyContent: 'space-between'
         }}
       >
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+          <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600 }}>今日任务</div>
           <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
             {formatDateChinese()}
+          </div>
+          </div>
+          <div style={featureTabs}>
+            <button onClick={() => navigate('/task-panel')} style={{ ...featureTab, ...activeTab }}>🗒 笔记</button>
+            <button onClick={() => navigate('/quiz')} style={featureTab}>✦ 答题</button>
+            <button onClick={() => navigate('/wrong-book')} style={featureTab}>↺ 错题本</button>
           </div>
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -195,3 +204,7 @@ const btnGhost: React.CSSProperties = {
   fontSize: 13,
   cursor: 'pointer'
 }
+
+const featureTabs: React.CSSProperties = { display: 'flex', gap: 4, padding: 3, background: 'rgba(255,255,255,.08)', borderRadius: 10 }
+const featureTab: React.CSSProperties = { background: 'transparent', color: 'var(--text-secondary)', borderRadius: 7, padding: '6px 7px', fontSize: 11, whiteSpace: 'nowrap' }
+const activeTab: React.CSSProperties = { background: 'rgba(255,184,108,.2)', color: 'var(--accent)', fontWeight: 600 }

@@ -17,8 +17,8 @@ export const TASK_PANEL_SIZE = {
 
 /** 设置窗口尺寸 */
 export const SETTINGS_WINDOW_SIZE = {
-  width: 480,
-  height: 600
+  width: 560,
+  height: 760
 } as const
 
 /** 提醒检查间隔（毫秒） */
@@ -42,6 +42,8 @@ export const IPC_CHANNELS = {
   SETTINGS_SET: 'settings:set',
   PET_TOGGLE_PANEL: 'pet:togglePanel',
   PET_QUICK_ADD: 'pet:quickAdd',
+  SETTINGS_SHOW: 'settings:show',
+  PET_HIDE: 'pet:hide',
   AI_CHAT: 'ai:chat',
   AI_SET_KEY: 'ai:setKey',
   AI_GET_STATUS: 'ai:getStatus'

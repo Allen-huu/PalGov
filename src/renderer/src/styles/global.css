@@ -41,6 +41,8 @@ body {
   line-height: 1.5;
 }
 
+body:has(.settings-page), body:has(.settings-page) #root { overflow: auto; }
+
 button {
   font-family: inherit;
   cursor: pointer;
