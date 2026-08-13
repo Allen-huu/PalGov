@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprite Sheet 拼接工具 — 桌面宠物动画帧</title>
+<style>
+  :root {
+    --bg: #1a1a1a;
+    --surface: #252525;
+    --border: #3a3a3a;
+    --text: #e0e0e0;
+    --text-dim: #888;
+    --accent: #ff9f0a;
+    --accent-hover: #ffb340;
+    --danger: #ff3b30;
+    --success: #34c759;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app { width: 100%; max-width: 720px; }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  header p { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  header .badge {
+    display: inline-block; margin-top: 8px; padding: 3px 10px;
+    border-radius: 20px; font-size: 10px; font-weight: 600;
+    background: rgba(255,159,10,0.12); color: var(--accent);
+  }
+
+  /* ---- Drop Zone ---- */
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 36px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s ease; background: var(--surface); margin-bottom: 12px;
+  }
+  .dropzone:hover, .dropzone.dragover { border-color: var(--accent); background: rgba(255,159,10,0.04); }
+  .dropzone .icon { font-size: 32px; margin-bottom: 6px; display: block; }
+  .dropzone .label { font-size: 13px; font-weight: 600; }
+  .dropzone .hint { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ---- Processing Panel ---- */
+  .process-panel {
+    display: none;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .process-panel.visible { display: block; }
+  .process-panel .row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .process-panel .row:last-child { margin-bottom: 0; }
+  .process-panel label {
+    font-size: 11px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .process-panel input[type="range"] {
+    width: 100px; accent-color: var(--accent);
+  }
+  .process-panel .color-swatch {
+    width: 22px; height: 22px; border-radius: 4px;
+    border: 1px solid var(--border); cursor: pointer; flex-shrink: 0;
+  }
+  .process-panel .color-swatch.active { box-shadow: 0 0 0 2px var(--accent); }
+  .process-panel .tolerance-val {
+    font-size: 10px; color: var(--text); min-width: 28px; text-align: center;
+  }
+  .process-panel .btn-sm {
+    padding: 4px 10px; border-radius: 12px; border: none;
+    font-size: 10px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: rgba(255,255,255,0.08); color: var(--text);
+  }
+  .process-panel .btn-sm:hover { background: rgba(255,255,255,0.14); }
+  .process-panel .btn-sm.active {
+    background: var(--accent); color: #1a1a1a;
+  }
+
+  /* ---- Frame List ---- */
+  .frame-list {
+    display: flex; flex-wrap: wrap; gap: 8px; min-height: 40px;
+    padding: 12px; border-radius: var(--radius);
+    background: var(--surface); border: 1px solid var(--border);
+  }
+  .frame-list:empty::after {
+    content: '上传图片后帧将显示在这里，可拖拽排序';
+    color: var(--text-dim); font-size: 11px; width: 100%;
+    text-align: center; padding: 20px 0;
+  }
+
+  .frame-item {
+    position: relative; width: 80px; height: 80px;
+    border-radius: 6px; overflow: hidden;
+    border: 2px solid transparent; cursor: grab;
+    background: repeating-conic-gradient(rgba(255,255,255,0.04) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+    transition: border-color 0.15s; flex-shrink: 0;
+  }
+  .frame-item:hover { border-color: var(--border); }
+  .frame-item.dragging { opacity: 0.5; border-color: var(--accent); }
+  .frame-item.drag-over { border-color: var(--accent); }
+  .frame-item img { width: 100%; height: 100%; object-fit: contain; }
+  .frame-item .frame-num {
+    position: absolute; top: 2px; left: 2px;
+    background: rgba(0,0,0,0.7); color: #fff;
+    font-size: 9px; font-weight: 700;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .frame-item .frame-del {
+    position: absolute; top: 2px; right: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: var(--danger);
+    border: none; cursor: pointer; font-size: 10px;
+    display: none; align-items: center; justify-content: center; line-height: 1;
+  }
+  .frame-item .frame-copy {
+    position: absolute; bottom: 2px; left: 2px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(0,0,0,0.6); color: var(--accent);
+    border: none; cursor: pointer; font-size: 10px;
+    display: none; align-items: center; justify-content: center; line-height: 1;
+  }
+  .frame-item:hover .frame-del { display: flex; }
+  .frame-item:hover .frame-copy { display: flex; }
+  .frame-item .frame-badge {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+  }
+
+  /* ---- Controls ---- */
+  .controls {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 12px; flex-wrap: wrap;
+  }
+  .controls label {
+    font-size: 11px; color: var(--text-dim);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .controls input[type="number"] {
+    width: 56px; padding: 5px 8px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 12px; text-align: center; font-family: inherit;
+  }
+  .controls input[type="number"]:focus { outline: none; border-color: var(--accent); }
+  .btn {
+    padding: 8px 18px; border-radius: 20px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all 0.15s ease;
+  }
+  .btn-primary { background: var(--accent); color: #1a1a1a; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-danger { background: transparent; color: var(--danger); font-size: 11px; }
+  .btn-danger:hover { background: rgba(255,59,48,0.1); }
+  .spacer { flex: 1; }
+
+  /* ---- Preview ---- */
+  .preview-section {
+    margin-top: 20px; display: none;
+  }
+  .preview-section.visible { display: block; }
+  .preview-section h2 {
+    font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text-dim);
+  }
+  .preview-wrap {
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .preview-static, .preview-anim {
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: repeating-conic-gradient(rgba(255,255,255,0.03) 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .preview-static img, .preview-anim img { display: block; }
+  @keyframes preview-play { from { object-position: 0 0; } }
+  .preview-info {
+    font-size: 10px; color: var(--text-dim); line-height: 1.6;
+  }
+  .preview-info code {
+    display: block; margin-top: 6px; padding: 8px 10px;
+    background: var(--surface); border-radius: 6px;
+    font-size: 10px; color: var(--accent);
+    white-space: pre-wrap; word-break: break-all;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Sprite Sheet 拼接工具</h1>
+    <p>上传 → 九宫格裁切 → 去背景 → 居中 → 拼接 → 下载</p>
+    <span class="badge">110 × 110 每帧</span>
+  </header>
+
+  <!-- Drop Zone -->
+  <div class="dropzone" id="dropzone">
+    <span class="icon">📁</span>
+    <div class="label">拖拽图片到此处，或点击上传</div>
+    <div class="hint" id="dropHint">支持 PNG · 可多选 · 自动按文件名排序</div>
+  </div>
+  <input type="file" id="fileInput" accept="image/png" multiple hidden>
+
+  <!-- Processing Panel -->
+  <div class="process-panel visible" id="processPanel">
+    <div class="row">
+      <label>
+        <input type="checkbox" id="gridMode">
+        九宫格裁切
+      </label>
+      <label>列<input type="number" id="gridCols" value="3" min="1" max="10" style="width:40px;padding:4px 4px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;font-family:inherit;"></label>
+      <label>行<input type="number" id="gridRows" value="3" min="1" max="10" style="width:40px;padding:4px 4px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;font-family:inherit;"></label>
+      <span style="font-size:10px;color:var(--text-dim);">（将整张图按行列切成单帧，按从左到右、从上到下排序）</span>
+    </div>
+    <div class="row">
+      <label>背景色</label>
+      <div class="color-swatch" id="colorSwatch" title="点击后在帧上取样背景色"></div>
+      <span style="font-size:10px;color:var(--text-dim);" id="colorLabel">未取样</span>
+      <button class="btn-sm" id="btnAutoDetect">自动检测</button>
+      <span style="font-size:10px;color:var(--text-dim);">（取四角最常见颜色）</span>
+    </div>
+    <div class="row">
+      <label>容差 <span class="tolerance-val" id="tolVal">32</span></label>
+      <input type="range" id="tolerance" value="32" min="0" max="128" step="1">
+      <label style="margin-left:8px;">
+        <input type="checkbox" id="autoCenter" checked>
+        自动居中（对齐角色中心点）
+      </label>
+      <span class="spacer"></span>
+      <button class="btn-sm active" id="btnApply" style="padding:5px 14px;font-size:11px;">应用处理</button>
+    </div>
+  </div>
+
+  <!-- Frame List -->
+  <div class="frame-list" id="frameList"></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <label>帧宽<input type="number" id="frameW" value="110" min="1" max="2048"></label>
+    <label>帧高<input type="number" id="frameH" value="110" min="1" max="2048"></label>
+    <label>重复至<input type="number" id="repeatTarget" value="25" min="1" max="60" style="width:40px;padding:5px 4px;text-align:center;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit;"></label>
+    <button class="btn btn-ghost" id="btnRepeat" style="font-size:10px;padding:5px 10px;">填充</button>
+    <span class="spacer"></span>
+    <button class="btn btn-danger" id="btnClear" style="display:none">清空</button>
+    <button class="btn btn-primary" id="btnStitch" disabled>拼接并下载</button>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-section" id="preview">
+    <h2>预览</h2>
+    <div class="preview-wrap">
+      <div class="preview-static" id="previewStatic"></div>
+      <div class="preview-anim" id="previewAnim"></div>
+      <div class="preview-info">
+        <div id="previewInfo"></div>
+        <code id="previewCode"></code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MAX_FRAMES = 60
+
+  // ---- State ----
+  let frames = [] // { name, img, processed: HTMLImageElement|null }
+  let bgColor = null // { r, g, b } | null
+  let tolerance = 32
+  let autoCenter = true
+  let pickingColor = false
+
+  // ---- DOM Refs ----
+  const $ = (id) => document.getElementById(id)
+  const dropzone = $('dropzone')
+  const fileInput = $('fileInput')
+  const dropHint = $('dropHint')
+  const frameList = $('frameList')
+  const processPanel = $('processPanel')
+  const gridMode = $('gridMode')
+  const gridCols = $('gridCols')
+  const gridRows = $('gridRows')
+  const colorSwatch = $('colorSwatch')
+  const colorLabel = $('colorLabel')
+  const btnAutoDetect = $('btnAutoDetect')
+  const tolSlider = $('tolerance')
+  const tolVal = $('tolVal')
+  const cbAutoCenter = $('autoCenter')
+  const btnApply = $('btnApply')
+  const btnStitch = $('btnStitch')
+  const btnClear = $('btnClear')
+  const btnRepeat = $('btnRepeat')
+  const repeatTarget = $('repeatTarget')
+  const frameW = $('frameW')
+  const frameH = $('frameH')
+  const preview = $('preview')
+  const previewStatic = $('previewStatic')
+  const previewAnim = $('previewAnim')
+  const previewInfo = $('previewInfo')
+  const previewCode = $('previewCode')
+
+  // ---- Grid Mode UI ----
+  function updateDropHint() {
+    if (gridMode.checked) {
+      dropHint.textContent = `九宫格模式：每张图按 ${gridCols.value}×${gridRows.value} 切成单帧`
+    } else {
+      dropHint.textContent = '支持 PNG · 可多选 · 自动按文件名排序'
+    }
+  }
+  gridMode.addEventListener('change', updateDropHint)
+  gridCols.addEventListener('input', updateDropHint)
+  gridRows.addEventListener('input', updateDropHint)
+
+  // ---- Repeat to N frames ----
+  btnRepeat.addEventListener('click', () => {
+    if (frames.length === 0) return
+    const target = parseInt(repeatTarget.value) || 1
+    if (target <= 0 || target > MAX_FRAMES) return alert(`目标帧数需在 1-${MAX_FRAMES} 之间`)
+    if (target <= frames.length) return
+
+    const newFrames = []
+    for (let i = 0; i < target; i++) {
+      const src = frames[i % frames.length]
+      newFrames.push({ name: `${src.name}_r${Math.floor(i / frames.length) + 1}`, img: src.img, processed: src.processed })
+    }
+    frames = newFrames
+    renderFrames()
+    updatePreview()
+  })
+
+  // ---- Drag & Drop ----
+  dropzone.addEventListener('click', () => fileInput.click())
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover') })
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'))
+  dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); handleFiles(e.dataTransfer.files) })
+  fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = '' })
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList).filter(f => f.type === 'image/png')
+    if (files.length === 0) return alert('请选择 PNG 格式的图片')
+
+    const useGrid = gridMode.checked
+    const cols = parseInt(gridCols.value) || 3
+    const rows = parseInt(gridRows.value) || 3
+
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+
+    if (useGrid) {
+      // 九宫格模式：将每张图切成 cols × rows 个单帧
+      const chunks = await Promise.all(files.map(f => loadImage(f)))
+      let newFrames = []
+      for (const chunk of chunks) {
+        const sliced = sliceGrid(chunk.img, cols, rows, chunk.name)
+        newFrames = newFrames.concat(sliced)
+      }
+      if (frames.length + newFrames.length > MAX_FRAMES) return alert(`最多支持 ${MAX_FRAMES} 帧，当前裁切后共 ${frames.length + newFrames.length} 帧`)
+      frames = frames.concat(newFrames)
+    } else {
+      if (frames.length + files.length > MAX_FRAMES) return alert(`最多支持 ${MAX_FRAMES} 帧`)
+      const loaded = await Promise.all(files.map(f => loadImage(f)))
+      frames = frames.concat(loaded)
+    }
+
+    renderFrames()
+  }
+
+  /** 将一张大图按 cols × rows 切成单帧 */
+  function sliceGrid(img, cols, rows, baseName) {
+    const fw = Math.floor(img.naturalWidth / cols)
+    const fh = Math.floor(img.naturalHeight / rows)
+    const result = []
+    const base = baseName.replace(/\.png$/i, '')
+    let idx = 0
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const canvas = document.createElement('canvas')
+        canvas.width = fw
+        canvas.height = fh
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, c * fw, r * fh, fw, fh, 0, 0, fw, fh)
+        const outImg = new Image()
+        outImg.src = canvas.toDataURL('image/png')
+        result.push({ name: `${base}_f${idx + 1}`, img: outImg, processed: null })
+        idx++
+      }
+    }
+    return result
+  }
+
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve({ name: file.name, img, processed: null })
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  // ---- Auto Detect Background Color ----
+  function autoDetectBg() {
+    if (frames.length === 0) return
+    const f = frames[0]
+    const canvas = document.createElement('canvas')
+    canvas.width = f.img.naturalWidth
+    canvas.height = f.img.naturalHeight
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(f.img, 0, 0)
+
+    // Sample corners (top-left, top-right, bottom-left, bottom-right)
+    const w = canvas.width, h = canvas.height
+    const margin = Math.max(2, Math.min(w, h) * 0.05)
+    const samples = []
+    const corners = [
+      [margin, margin], [w - margin, margin],
+      [margin, h - margin], [w - margin, h - margin]
+    ]
+    corners.forEach(([x, y]) => {
+      const d = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data
+      samples.push({ r: d[0], g: d[1], b: d[2] })
+    })
+
+    // Find most common color among corners
+    const key = (c) => `${Math.round(c.r/20)*20},${Math.round(c.g/20)*20},${Math.round(c.b/20)*20}`
+    const freq = {}
+    samples.forEach(c => { const k = key(c); freq[k] = (freq[k] || 0) + 1 })
+    const bestKey = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
+    const parts = bestKey.split(',')
+    bgColor = { r: parseInt(parts[0]), g: parseInt(parts[1]), b: parseInt(parts[2]) }
+    updateColorUI()
+  }
+
+  btnAutoDetect.addEventListener('click', () => {
+    autoDetectBg()
+  })
+
+  // ---- Color Picker ----
+  colorSwatch.addEventListener('click', () => {
+    pickingColor = !pickingColor
+    colorSwatch.classList.toggle('active', pickingColor)
+    if (pickingColor) {
+      frameList.style.cursor = 'crosshair'
+      colorLabel.textContent = '点击帧取样背景色…'
+    } else {
+      frameList.style.cursor = ''
+      colorLabel.textContent = bgColor ? `rgb(${bgColor.r},${bgColor.g},${bgColor.b})` : '未取样'
+    }
+  })
+
+  function updateColorUI() {
+    if (bgColor) {
+      colorSwatch.style.background = `rgb(${bgColor.r},${bgColor.g},${bgColor.b})`
+      colorLabel.textContent = `rgb(${bgColor.r},${bgColor.g},${bgColor.b})`
+    } else {
+      colorSwatch.style.background = 'transparent'
+      colorLabel.textContent = '未取样'
+    }
+  }
+
+  // ---- Tolerance ----
+  tolSlider.addEventListener('input', () => {
+    tolerance = parseInt(tolSlider.value)
+    tolVal.textContent = tolerance
+  })
+
+  // ---- Auto Center ----
+  cbAutoCenter.addEventListener('change', () => {
+    autoCenter = cbAutoCenter.checked
+  })
+
+  // ---- Apply Processing ----
+  btnApply.addEventListener('click', () => applyProcessing())
+
+  function applyProcessing() {
+    if (!bgColor || frames.length === 0) return
+    frames.forEach(f => {
+      f.processed = processFrame(f.img)
+    })
+    renderFrames()
+    updatePreview()
+  }
+
+  function processFrame(srcImg) {
+    const w = srcImg.naturalWidth
+    const h = srcImg.naturalHeight
+    const canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(srcImg, 0, 0)
+    const imageData = ctx.getImageData(0, 0, w, h)
+    const data = imageData.data
+
+    // Remove background color
+    const tol = tolerance
+    const bg = bgColor
+    for (let i = 0; i < data.length; i += 4) {
+      const dr = Math.abs(data[i] - bg.r)
+      const dg = Math.abs(data[i + 1] - bg.g)
+      const db = Math.abs(data[i + 2] - bg.b)
+      if (dr <= tol && dg <= tol && db <= tol) {
+        data[i + 3] = 0 // set alpha to 0
+      }
+    }
+    ctx.putImageData(imageData, 0, 0)
+
+    if (!autoCenter) {
+      const outImg = new Image()
+      outImg.src = canvas.toDataURL('image/png')
+      return outImg
+    }
+
+    // Find bounding box of non-transparent pixels
+    const imgData2 = ctx.getImageData(0, 0, w, h)
+    const d2 = imgData2.data
+    let minX = w, minY = h, maxX = 0, maxY = 0
+    let hasPixel = false
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const idx = (y * w + x) * 4
+        if (d2[idx + 3] > 0) {
+          hasPixel = true
+          if (x < minX) minX = x
+          if (y < minY) minY = y
+          if (x > maxX) maxX = x
+          if (y > maxY) maxY = y
+        }
+      }
+    }
+
+    if (!hasPixel) {
+      const outImg = new Image()
+      outImg.src = canvas.toDataURL('image/png')
+      return outImg
+    }
+
+    // Center the content
+    const contentW = maxX - minX + 1
+    const contentH = maxY - minY + 1
+    const offsetX = Math.round((w - contentW) / 2) - minX
+    const offsetY = Math.round((h - contentH) / 2) - minY
+
+    const outCanvas = document.createElement('canvas')
+    outCanvas.width = w
+    outCanvas.height = h
+    const outCtx = outCanvas.getContext('2d')
+    // Clear with transparency
+    outCtx.clearRect(0, 0, w, h)
+    // Draw the processed image at the centered position
+    outCtx.drawImage(canvas, offsetX, offsetY)
+
+    const outImg = new Image()
+    outImg.src = outCanvas.toDataURL('image/png')
+    return outImg
+  }
+
+  // ---- Frame List Rendering ----
+  let dragIdx = -1
+
+  function renderFrames() {
+    frameList.innerHTML = ''
+    const hasProcessed = frames.some(f => f.processed)
+    frames.forEach((f, i) => {
+      const src = f.processed || f.img
+      const el = document.createElement('div')
+      el.className = 'frame-item'
+      el.draggable = true
+      el.innerHTML = `
+        <img src="${src.src}" alt="${f.name}">
+        <span class="frame-num">${i + 1}</span>
+        <button class="frame-del" title="删除">×</button>
+        <button class="frame-copy" title="复制">+</button>
+        ${f.processed ? '<span class="frame-badge" title="已处理"></span>' : ''}
+      `
+      el.querySelector('.frame-del').addEventListener('click', (e) => {
+        e.stopPropagation(); frames.splice(i, 1); renderFrames(); updatePreview()
+      })
+      el.querySelector('.frame-copy').addEventListener('click', (e) => {
+        e.stopPropagation()
+        const clone = { name: `${f.name}_copy`, img: f.img, processed: f.processed }
+        frames.splice(i + 1, 0, clone)
+        renderFrames()
+        updatePreview()
+      })
+
+      // Color picking
+      el.addEventListener('click', (e) => {
+        if (!pickingColor) return
+        e.stopPropagation()
+        const rect = el.getBoundingClientRect()
+        const imgEl = el.querySelector('img')
+        const canvas = document.createElement('canvas')
+        const srcImg = f.img
+        canvas.width = srcImg.naturalWidth
+        canvas.height = srcImg.naturalHeight
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(srcImg, 0, 0)
+        const sx = Math.round((e.clientX - rect.left) / rect.width * srcImg.naturalWidth)
+        const sy = Math.round((e.clientY - rect.top) / rect.height * srcImg.naturalHeight)
+        const d = ctx.getImageData(Math.min(sx, canvas.width - 1), Math.min(sy, canvas.height - 1), 1, 1).data
+        bgColor = { r: d[0], g: d[1], b: d[2] }
+        updateColorUI()
+        pickingColor = false
+        colorSwatch.classList.remove('active')
+        frameList.style.cursor = ''
+      })
+
+      el.addEventListener('dragstart', () => { dragIdx = i; el.classList.add('dragging') })
+      el.addEventListener('dragend', () => { el.classList.remove('dragging'); dragIdx = -1 })
+      el.addEventListener('dragover', (e) => { e.preventDefault(); el.classList.add('drag-over') })
+      el.addEventListener('dragleave', () => el.classList.remove('drag-over'))
+      el.addEventListener('drop', () => {
+        el.classList.remove('drag-over')
+        if (dragIdx < 0 || dragIdx === i) return
+        const [moved] = frames.splice(dragIdx, 1)
+        frames.splice(i, 0, moved)
+        renderFrames()
+      })
+      frameList.appendChild(el)
+    })
+    updateUI()
+  }
+
+  function updateUI() {
+    const hasFrames = frames.length > 0
+    btnStitch.disabled = !hasFrames
+    btnClear.style.display = hasFrames ? 'inline-block' : 'none'
+    btnStitch.textContent = hasFrames ? `拼接并下载 (${frames.length} 帧)` : '拼接并下载'
+  }
+
+  // ---- Stitch ----
+  btnStitch.addEventListener('click', () => {
+    const fw = parseInt(frameW.value) || 110
+    const fh = parseInt(frameH.value) || 110
+    const totalH = fh * frames.length
+
+    const canvas = document.createElement('canvas')
+    canvas.width = fw
+    canvas.height = totalH
+    const ctx = canvas.getContext('2d')
+
+    frames.forEach((f, i) => {
+      const src = f.processed || f.img
+      // Scale to fit frame size, preserving aspect ratio
+      const scale = Math.min(fw / src.naturalWidth, fh / src.naturalHeight)
+      const dw = src.naturalWidth * scale
+      const dh = src.naturalHeight * scale
+      const dx = Math.round((fw - dw) / 2)
+      const dy = Math.round((fh - dh) / 2) + i * fh
+      ctx.drawImage(src, dx, dy, dw, dh)
+    })
+
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'sprite.png'
+      a.click()
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  })
+
+  // ---- Preview ----
+  frameW.addEventListener('input', updatePreview)
+  frameH.addEventListener('input', updatePreview)
+
+  function updatePreview() {
+    if (frames.length === 0) {
+      preview.classList.remove('visible')
+      return
+    }
+    preview.classList.add('visible')
+    const fw = parseInt(frameW.value) || 110
+    const fh = parseInt(frameH.value) || 110
+    const totalH = fh * frames.length
+
+    const canvas = document.createElement('canvas')
+    canvas.width = fw
+    canvas.height = totalH
+    const ctx = canvas.getContext('2d')
+    frames.forEach((f, i) => {
+      const src = f.processed || f.img
+      const scale = Math.min(fw / src.naturalWidth, fh / src.naturalHeight)
+      ctx.drawImage(src,
+        Math.round((fw - src.naturalWidth * scale) / 2),
+        i * fh + Math.round((fh - src.naturalHeight * scale) / 2),
+        src.naturalWidth * scale, src.naturalHeight * scale)
+    })
+    const dataUrl = canvas.toDataURL('image/png')
+
+    previewStatic.innerHTML = `<img src="${dataUrl}" style="width:${fw}px;height:${totalH}px;object-fit:none;display:block">`
+    previewAnim.innerHTML = `<img src="${dataUrl}" style="width:${fw}px;height:${fh}px;object-fit:none;object-position:0 0">`
+
+    let styleEl = document.getElementById('preview-keyframes')
+    if (!styleEl) {
+      styleEl = document.createElement('style')
+      styleEl.id = 'preview-keyframes'
+      document.head.appendChild(styleEl)
+    }
+    const steps = []
+    for (let i = 0; i < frames.length; i++) {
+      steps.push(`${Math.round((i / frames.length) * 10000) / 100}% { object-position: 0 -${i * fh}px }`)
+    }
+    steps.push(`100% { object-position: 0 -${(frames.length - 1) * fh}px }`)
+    const dur = Math.max(0.6, frames.length * 0.12)
+    styleEl.textContent = `@keyframes preview-play { ${steps.join(' ')} } .preview-anim img { animation: preview-play ${dur}s steps(1) infinite; }`
+
+    previewInfo.innerHTML = `共 <strong>${frames.length}</strong> 帧 · 每帧 <strong>${fw}×${fh}</strong> · 总尺寸 <strong>${fw}×${totalH}</strong>`
+    const hasProcessed = frames.some(f => f.processed)
+    const status = hasProcessed ? '已处理（去背景 + 居中）' : '未处理'
+    previewInfo.innerHTML += `<br>状态: ${status}`
+    const w2 = Math.round(fw * 0.6)
+    const h2 = Math.round(fh * 0.6)
+    previewCode.textContent = `.pet-sprite {\n  width: ${w2}px;\n  height: ${h2}px;\n  background: url('sprite.png');\n  background-size: ${w2}px ${Math.round(totalH * 0.6)}px;\n  animation: pet-play ${dur}s steps(${frames.length}) infinite;\n}`
+  }
+
+  // ---- Clear ----
+  btnClear.addEventListener('click', () => {
+    frames = []; bgColor = null; updateColorUI()
+    renderFrames(); preview.classList.remove('visible')
+  })
+</script>
+</body>
+</html>

@@ -3,11 +3,14 @@
  */
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '../config/constants'
-import { dragPetWindow, showPetWindow } from '../windows/petWindow'
+import { dragPetWindow, getPetWindow, hidePetWindow, showPetWindow } from '../windows/petWindow'
 import { hideTaskWindow, showTaskWindow, toggleTaskWindow } from '../windows/taskWindow'
 import { showSettingsWindow } from '../windows/settingsWindow'
 
 export function registerWindowIpc(): void {
+  ipcMain.on(IPC_CHANNELS.SETTINGS_SHOW, () => showSettingsWindow())
+  ipcMain.on(IPC_CHANNELS.PET_HIDE, () => hidePetWindow())
+  ipcMain.on(IPC_CHANNELS.PET_SHOW, () => showPetWindow())
   // 拖拽宠物
   ipcMain.on(IPC_CHANNELS.WINDOW_DRAG, (_evt, args: { dx: number; dy: number }) => {
     dragPetWindow(args.dx, args.dy)
@@ -29,9 +32,13 @@ export function registerWindowIpc(): void {
   // 快速添加任务：弹出任务面板并聚焦到输入框
   ipcMain.on(IPC_CHANNELS.PET_QUICK_ADD, () => {
     showTaskWindow()
-    // 渲染进程会监听窗口显示事件，并在 URL hash 中处理 focus
   })
 
-  // 失焦隐藏任务面板
-  // 注意：在 taskWindow.ts 的 ready-to-show 中绑定 blur 事件
+  // 宠物动画事件：将渲染进程的动画触发转发到宠物窗口
+  ipcMain.on(IPC_CHANNELS.PET_ANIM_EVENT, (_evt, args: { event: string }) => {
+    const pet = getPetWindow()
+    if (pet && !pet.isDestroyed()) {
+      pet.webContents.send(IPC_CHANNELS.PET_ANIM_EVENT, args.event)
+    }
+  })
 }

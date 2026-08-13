@@ -1,21 +1,63 @@
+/* ===== Apple-style Design System v2 — 米白奶油色调 ===== */
+
 :root {
-  --pet-bg: transparent;
-  --panel-bg: rgba(30, 32, 40, 0.85);
-  --panel-border: rgba(255, 255, 255, 0.1);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.65);
-  --accent: #ffb86c;
-  --accent-hover: #ffc987;
-  --success: #50fa7b;
-  --danger: #ff5555;
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  /* 背景与玻璃态 — 米白/奶油色 */
+  --glass-bg: rgba(250, 247, 240, 0.92);
+  --glass-bg-strong: rgba(250, 247, 240, 0.96);
+  --glass-bg-subtle: rgba(250, 247, 240, 0.78);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: saturate(160%) blur(16px);
+
+  /* 面板 */
+  --panel-bg: rgba(250, 247, 240, 0.92);
+  --panel-border: rgba(0, 0, 0, 0.05);
+
+  /* 文字 */
+  --text-primary: #2c2416;
+  --text-secondary: #8c8070;
+  --text-tertiary: #b8a898;
+
+  /* 强调色（Apple 暖橙） */
+  --accent: #ff9f0a;
+  --accent-hover: #ffb340;
+  --accent-bg: rgba(255, 159, 10, 0.14);
+
+  /* 语义色 */
+  --success: #34c759;
+  --success-bg: rgba(52, 199, 89, 0.14);
+  --danger: #ff3b30;
+  --danger-bg: rgba(255, 59, 48, 0.12);
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* 间距 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  /* 字体 */
   font-family:
     -apple-system,
     BlinkMacSystemFont,
-    'Segoe UI',
+    'SF Pro Display',
+    'SF Pro Text',
     'PingFang SC',
-    'Microsoft YaHei',
+    'Helvetica Neue',
     sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -39,6 +81,12 @@ body {
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+body:has(.settings-page),
+body:has(.settings-page) #root {
+  overflow: auto;
 }
 
 button {
@@ -46,56 +94,194 @@ button {
   cursor: pointer;
   border: none;
   outline: none;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
+}
+
+button:active {
+  transform: scale(0.97);
 }
 
 input,
-textarea {
+textarea,
+select {
   font-family: inherit;
   outline: none;
+  font-size: 14px;
+  letter-spacing: -0.01em;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
+/* ===== 动画 ===== */
+
 @keyframes breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.04);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
 }
 
 @keyframes bounce {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
 @keyframes wiggle {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-3deg);
-  }
-  75% {
-    transform: rotate(3deg);
-  }
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 通用组件样式 ===== */
+
+/* 玻璃态卡片 */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* 分段控制器 */
+.segmented-control {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-sm);
+}
+
+.segmented-item {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.segmented-item.active {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Apple 风格 Toggle */
+.toggle-track {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  border: none;
+  position: relative;
+  transition: background 0.25s ease;
+  cursor: pointer;
+}
+
+.toggle-track.on {
+  background: var(--accent);
+}
+
+.toggle-track.off {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition: left 0.25s cubic-bezier(0.2, 0.85, 0.32, 1.2);
+}
+
+.toggle-thumb.on { left: 21px; }
+.toggle-thumb.off { left: 3px; }
+
+/* 输入框 */
+.input-apple {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-apple:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 159, 10, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.input-apple::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 主按钮 */
+.btn-primary {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(255, 159, 10, 0.25);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* 次要按钮 */
+.btn-ghost {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
 }

@@ -10,6 +10,7 @@ build/
 
 # Vite cache
 .vite/
+electron.vite.config.*.mjs
 
 # IDE
 .vscode/*

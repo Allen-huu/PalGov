@@ -1,155 +1,115 @@
 /**
- * 宠物页（透明窗口）：渲染宠物精灵 + 右键菜单
+ * 宠物页（透明窗口）— 水豚噜噜唯一角色
+ * 操作：双击切换面板，拖拽移动
+ * 右键菜单已移除，全部使用快捷键控制
  */
 import React from 'react'
 import { PetSprite, PetState } from '../components/PetSprite'
 import { useDrag } from '../hooks/useDrag'
-import { PetSkin, Settings } from '@shared/types'
+import { Settings } from '@shared/types'
 
 export const PetPage: React.FC = () => {
   const [settings, setSettings] = React.useState<Settings | null>(null)
   const [state, setState] = React.useState<PetState>('idle')
-  const [menuOpen, setMenuOpen] = React.useState(false)
-  const [menuPos, setMenuPos] = React.useState({ x: 0, y: 0 })
-  const { onMouseDown, hasDragged } = useDrag()
+  const [speech, setSpeech] = React.useState<string | null>(null)
+  const { onMouseDown, hasDragged, isDragging } = useDrag()
+  const animTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const speechTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** 播放一次性动画，结束后回到 idle */
+  const playOnce = (s: PetState, durationMs: number) => {
+    if (animTimerRef.current) clearTimeout(animTimerRef.current)
+    setState(s)
+    animTimerRef.current = setTimeout(() => setState('idle'), durationMs)
+  }
+
+  /** 显示对话气泡，自动消失 */
+  const showSpeech = (msg: string) => {
+    if (speechTimerRef.current) clearTimeout(speechTimerRef.current)
+    setSpeech(msg)
+    speechTimerRef.current = setTimeout(() => setSpeech(null), 4000)
+  }
 
   React.useEffect(() => {
     window.pet.settings.get().then(setSettings)
 
-    // 监听到期提醒：切换为 alert 状态 5 秒
-    const unsubscribe = window.pet.task.onNotify(() => {
+    const unsubNotify = window.pet.task.onNotify(() => {
       setState('alert')
       setTimeout(() => setState('idle'), 5000)
     })
-    return unsubscribe
+
+    const unsubQuiz = window.pet.anim.onQuizEvent((event: string) => {
+      if (event === 'correct') playOnce('correct', 2500)
+      else if (event === 'wrong') playOnce('wrong', 2500)
+    })
+
+    // 监听喝水提醒
+    const unsubSpeech = window.pet.anim.onSpeech((msg: string) => {
+      showSpeech(msg)
+    })
+
+    return () => { unsubNotify(); unsubQuiz(); unsubSpeech() }
   }, [])
 
-  const handleClick = () => {
-    if (hasDragged()) return
-    window.pet.window.togglePanel()
-  }
+  // 拖拽状态同步
+  React.useEffect(() => {
+    if (isDragging) {
+      setState('dragging')
+    } else if (state === 'dragging') {
+      setState('idle')
+    }
+  }, [isDragging])
 
   const handleDoubleClick = () => {
     if (hasDragged()) return
-    window.pet.window.quickAdd()
+    window.pet.window.togglePanel()
   }
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
-    setMenuOpen(true)
-  }
-
-  const closeMenu = () => setMenuOpen(false)
 
   if (!settings) return null
 
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative'
+        width: '100%', height: '100%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
       }}
-      onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      onContextMenu={handleContextMenu}
     >
-      <PetSprite
-        skin={(settings.petSkin as PetSkin) || 'cat'}
-        state={state}
-        onMouseDown={onMouseDown}
-      />
-
-      {menuOpen && (
-        <ContextMenu
-          x={menuPos.x}
-          y={menuPos.y}
-          onClose={closeMenu}
-          onAdd={() => {
-            closeMenu()
-            window.pet.window.showPanel()
-          }}
-          onSettings={() => {
-            closeMenu()
-            window.open(`file://${location.pathname}#settings`, '_blank')
-          }}
-          onQuit={() => {
-            closeMenu()
-            // 通过隐藏窗口模拟退出，实际退出由托盘菜单触发
-            window.pet.window.hidePanel()
-          }}
-        />
+      {speech && (
+        <div style={{
+          position: 'absolute',
+          bottom: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          marginBottom: 4,
+          padding: '6px 12px',
+          borderRadius: 12,
+          background: 'rgba(255,255,255,0.92)',
+          border: '1px solid rgba(0,0,0,0.08)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          fontSize: 11,
+          color: 'var(--text-primary)',
+          whiteSpace: 'nowrap',
+          zIndex: 10,
+          animation: 'fadeIn 0.3s ease',
+          maxWidth: 200,
+          textAlign: 'center',
+        }}>
+          {speech}
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0, height: 0,
+            borderLeft: '6px solid transparent',
+            borderRight: '6px solid transparent',
+            borderTop: '6px solid rgba(255,255,255,0.92)',
+          }} />
+        </div>
       )}
-    </div>
-  )
-}
-
-/** 右键菜单 */
-const ContextMenu: React.FC<{
-  x: number
-  y: number
-  onClose: () => void
-  onAdd: () => void
-  onSettings: () => void
-  onQuit: () => void
-}> = ({ x, y, onClose, onAdd, onSettings, onQuit }) => {
-  React.useEffect(() => {
-    const h = () => onClose()
-    window.addEventListener('click', h)
-    return () => window.removeEventListener('click', h)
-  }, [onClose])
-
-  const items = [
-    { label: '📋 添加任务', onClick: onAdd },
-    { label: '⚙️ 设置', onClick: onSettings },
-    { type: 'separator' as const },
-    { label: '🚪 退出', onClick: onQuit }
-  ]
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        left: x,
-        top: y,
-        minWidth: 140,
-        background: 'var(--panel-bg)',
-        border: '1px solid var(--panel-border)',
-        borderRadius: 8,
-        boxShadow: 'var(--shadow)',
-        backdropFilter: 'blur(10px)',
-        padding: 4,
-        zIndex: 1000
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {items.map((item, i) =>
-        item.type === 'separator' ? (
-          <div
-            key={i}
-            style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '4px 0' }}
-          />
-        ) : (
-          <div
-            key={i}
-            onClick={item.onClick}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 4,
-              cursor: 'pointer',
-              fontSize: 13
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          >
-            {item.label}
-          </div>
-        )
-      )}
+      <PetSprite state={state} onMouseDown={onMouseDown} />
     </div>
   )
 }

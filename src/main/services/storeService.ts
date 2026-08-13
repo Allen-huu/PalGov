@@ -31,9 +31,7 @@ async function getDb() {
   if (!dbPromise) {
     const instance = await JSONFilePreset<DbSchema>(getDbPath(), defaultData)
     // 兼容旧数据：若字段缺失则补默认值
-    if (!instance.data.settings) {
-      instance.data.settings = { ...DEFAULT_SETTINGS }
-    }
+    instance.data.settings = { ...DEFAULT_SETTINGS, ...(instance.data.settings ?? {}) }
     if (!Array.isArray(instance.data.tasks)) {
       instance.data.tasks = []
     }

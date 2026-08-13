@@ -3,7 +3,7 @@
  */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 import { IPC_CHANNELS } from '../main/config/constants'
-import { NotifyPayload, Settings, TaskInput, TaskUpdateInput } from '@shared/types'
+import { NotifyPayload, Settings, TaskInput, TaskUpdateInput, QuestionBankInfo, QuestionBank } from '@shared/types'
 
 const api = {
   /** 任务相关 */
@@ -38,7 +38,10 @@ const api = {
     togglePanel: () => ipcRenderer.send(IPC_CHANNELS.PET_TOGGLE_PANEL),
     showPanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_SHOW_PANEL),
     hidePanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_HIDE_PANEL),
-    quickAdd: () => ipcRenderer.send(IPC_CHANNELS.PET_QUICK_ADD)
+    quickAdd: () => ipcRenderer.send(IPC_CHANNELS.PET_QUICK_ADD),
+    showSettings: () => ipcRenderer.send(IPC_CHANNELS.SETTINGS_SHOW),
+    hidePet: () => ipcRenderer.send(IPC_CHANNELS.PET_HIDE),
+    showPet: () => ipcRenderer.send(IPC_CHANNELS.PET_SHOW)
   },
 
   /** 设置相关 */
@@ -68,6 +71,33 @@ const api = {
   /** 应用信息 */
   app: {
     platform: process.platform
+  },
+
+  /** 题库 */
+  quiz: {
+    listBanks: () =>
+      ipcRenderer.invoke('quiz:listBanks') as Promise<QuestionBankInfo[]>,
+    loadBank: (fileName: string) =>
+      ipcRenderer.invoke('quiz:loadBank', fileName) as Promise<QuestionBank | null>
+  },
+
+  /** 宠物动画 */
+  anim: {
+    /** 发送答题事件给宠物窗口（答对/答错触发动画） */
+    sendQuizEvent: (event: 'correct' | 'wrong') =>
+      ipcRenderer.send(IPC_CHANNELS.PET_ANIM_EVENT, { event }),
+    /** 在宠物窗口监听答题事件 */
+    onQuizEvent: (cb: (event: string) => void) => {
+      const handler = (_e: IpcRendererEvent, event: string) => cb(event)
+      ipcRenderer.on(IPC_CHANNELS.PET_ANIM_EVENT, handler)
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.PET_ANIM_EVENT, handler)
+    },
+    /** 在宠物窗口监听对话气泡 */
+    onSpeech: (cb: (message: string) => void) => {
+      const handler = (_e: IpcRendererEvent, message: string) => cb(message)
+      ipcRenderer.on(IPC_CHANNELS.PET_SPEECH, handler)
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.PET_SPEECH, handler)
+    }
   }
 }
 
