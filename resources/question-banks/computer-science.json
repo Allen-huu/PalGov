@@ -1,0 +1,56 @@
+{
+  "name": "计算机基础",
+  "description": "计算机科学基础知识题库，涵盖数据结构、操作系统、计算机网络、计算机组成原理等核心课程",
+  "questions": [
+    {
+      "id": "cs001",
+      "type": "single_choice",
+      "question": "在二叉搜索树中，查找一个元素的时间复杂度是？",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "answer": 1,
+      "explanation": "平衡二叉搜索树的查找时间复杂度为 O(log n)，最坏情况下（退化为链表）为 O(n)。",
+      "difficulty": "easy",
+      "tags": ["数据结构", "二叉树"]
+    },
+    {
+      "id": "cs002",
+      "type": "single_choice",
+      "question": "以下哪个不属于操作系统的功能？",
+      "options": ["进程管理", "内存管理", "编译程序", "文件管理"],
+      "answer": 2,
+      "explanation": "编译程序属于语言处理程序，不是操作系统的核心功能。操作系统的主要功能包括进程管理、内存管理、文件管理和设备管理。",
+      "difficulty": "easy",
+      "tags": ["操作系统", "基础概念"]
+    },
+    {
+      "id": "cs003",
+      "type": "single_choice",
+      "question": "TCP 协议工作在 OSI 模型的哪一层？",
+      "options": ["网络层", "传输层", "会话层", "应用层"],
+      "answer": 1,
+      "explanation": "TCP（传输控制协议）工作在传输层，提供可靠的、面向连接的数据传输服务。",
+      "difficulty": "easy",
+      "tags": ["计算机网络", "TCP/IP"]
+    },
+    {
+      "id": "cs004",
+      "type": "single_choice",
+      "question": "以下哪种排序算法的平均时间复杂度是 O(n log n)？",
+      "options": ["冒泡排序", "插入排序", "快速排序", "选择排序"],
+      "answer": 2,
+      "explanation": "快速排序的平均时间复杂度为 O(n log n)，冒泡、插入和选择排序的平均时间复杂度均为 O(n²)。",
+      "difficulty": "medium",
+      "tags": ["数据结构", "排序算法"]
+    },
+    {
+      "id": "cs005",
+      "type": "single_choice",
+      "question": "HTTP 协议的默认端口号是？",
+      "options": ["21", "22", "80", "443"],
+      "answer": 2,
+      "explanation": "HTTP 默认使用 80 端口，HTTPS 使用 443 端口，FTP 使用 21 端口，SSH 使用 22 端口。",
+      "difficulty": "easy",
+      "tags": ["计算机网络", "HTTP"]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "frameWidth": 110,
+  "frameHeight": 110,
+  "animations": {
+    "idle": {
+      "file": "sprites/idle.png",
+      "frames": 25,
+      "fps": 5,
+      "loop": true
+    },
+    "happy": {
+      "file": "sprites/happy.png",
+      "frames": 25,
+      "fps": 12,
+      "loop": true
+    },
+    "alert": {
+      "file": "sprites/alert.png",
+      "frames": 25,
+      "fps": 10,
+      "loop": true
+    },
+    "dragging": {
+      "file": "sprites/dragging.png",
+      "frames": 25,
+      "fps": 12,
+      "loop": true
+    },
+    "correct": {
+      "file": "sprites/correct.png",
+      "frames": 25,
+      "fps": 12,
+      "loop": false
+    },
+    "wrong": {
+      "file": "sprites/wrong.png",
+      "frames": 25,
+      "fps": 12,
+      "loop": false
+    }
+  }
+}

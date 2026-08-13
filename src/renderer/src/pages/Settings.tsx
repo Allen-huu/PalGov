@@ -1,5 +1,5 @@
 import React from 'react'
-import { Settings, ShortcutConfig } from '@shared/types'
+import { Settings, ShortcutConfig, QuizShortcutConfig } from '@shared/types'
 
 export const SettingsPage: React.FC = () => {
   const [settings, setSettings] = React.useState<Settings | null>(null)
@@ -9,6 +9,8 @@ export const SettingsPage: React.FC = () => {
   const [message, setMessage] = React.useState('')
   /** 快捷键录制状态 */
   const [recording, setRecording] = React.useState<keyof ShortcutConfig | null>(null)
+  /** 答题快捷键录制状态 */
+  const [quizRecording, setQuizRecording] = React.useState<keyof QuizShortcutConfig | null>(null)
 
   React.useEffect(() => { window.pet.settings.get().then((s: Settings) => { setSettings(s); setKey(s.aiApiKey ?? '') }) }, [])
 
@@ -64,6 +66,24 @@ export const SettingsPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [recording, settings])
 
+  /** 监听键盘事件录制答题快捷键（单键，不含修饰键） */
+  React.useEffect(() => {
+    if (!quizRecording) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      // 忽略纯修饰键
+      if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return
+      const keyName = e.key.length === 1 ? e.key.toUpperCase() : e.key
+      const newQuizShortcuts = { ...settings!.quizShortcuts, [quizRecording]: keyName }
+      update({ quizShortcuts: newQuizShortcuts })
+      setQuizRecording(null)
+      setMessage(`已设置: ${keyName}`)
+    }
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [quizRecording, settings])
+
   if (!settings) return <div className="settings-page" style={{ padding: 32, color: 'var(--text-primary)', background: 'var(--glass-bg)', height: '100%' }}>正在加载设置…</div>
 
   return <main className="settings-page" style={s.page}>
@@ -110,6 +130,51 @@ export const SettingsPage: React.FC = () => {
       />
     </Section>
 
+    <Section title="答题快捷键">
+      <QuizShortcutRow
+        label="选择选项 A"
+        value={settings.quizShortcuts.selectA}
+        recording={quizRecording === 'selectA'}
+        onRecord={() => { if (!quizRecording) setQuizRecording('selectA') }}
+        onCancel={() => setQuizRecording(null)}
+      />
+      <QuizShortcutRow
+        label="选择选项 B"
+        value={settings.quizShortcuts.selectB}
+        recording={quizRecording === 'selectB'}
+        onRecord={() => { if (!quizRecording) setQuizRecording('selectB') }}
+        onCancel={() => setQuizRecording(null)}
+      />
+      <QuizShortcutRow
+        label="选择选项 C"
+        value={settings.quizShortcuts.selectC}
+        recording={quizRecording === 'selectC'}
+        onRecord={() => { if (!quizRecording) setQuizRecording('selectC') }}
+        onCancel={() => setQuizRecording(null)}
+      />
+      <QuizShortcutRow
+        label="选择选项 D"
+        value={settings.quizShortcuts.selectD}
+        recording={quizRecording === 'selectD'}
+        onRecord={() => { if (!quizRecording) setQuizRecording('selectD') }}
+        onCancel={() => setQuizRecording(null)}
+      />
+      <QuizShortcutRow
+        label="下一题"
+        value={settings.quizShortcuts.nextQuestion}
+        recording={quizRecording === 'nextQuestion'}
+        onRecord={() => { if (!quizRecording) setQuizRecording('nextQuestion') }}
+        onCancel={() => setQuizRecording(null)}
+      />
+      <QuizShortcutRow
+        label="上一题"
+        value={settings.quizShortcuts.prevQuestion}
+        recording={quizRecording === 'prevQuestion'}
+        onRecord={() => { if (!quizRecording) setQuizRecording('prevQuestion') }}
+        onCancel={() => setQuizRecording(null)}
+      />
+    </Section>
+
     <Section title="任务提醒">
       <Row label="启用任务到点提醒"><Toggle checked={settings.enableNotify} onChange={(v) => update({ enableNotify: v })} /></Row>
       <Row label="播放提醒声音"><Toggle checked={settings.notifySound} onChange={(v) => update({ notifySound: v })} /></Row>
@@ -151,6 +216,32 @@ export const SettingsPage: React.FC = () => {
 
     <Section title="系统行为">
       <Row label="开机自动启动"><Toggle checked={settings.autoStart} onChange={(v) => update({ autoStart: v })} /></Row>
+    </Section>
+
+    <Section title="喝水提醒">
+      <Field label="提醒间隔（分钟，0 为关闭）">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="range" min="0" max="120" step="5" value={settings.drinkReminderMinutes}
+            onChange={(e) => update({ drinkReminderMinutes: Number(e.target.value) })}
+            style={{ flex: 1, accentColor: 'var(--accent)' }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', minWidth: 40, textAlign: 'right' }}>
+            {settings.drinkReminderMinutes === 0 ? '关闭' : `${settings.drinkReminderMinutes} 分钟`}
+          </span>
+        </div>
+      </Field>
+    </Section>
+
+    <Section title="站立提醒">
+      <Field label="提醒间隔（分钟，0 为关闭）">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="range" min="0" max="120" step="5" value={settings.standReminderMinutes}
+            onChange={(e) => update({ standReminderMinutes: Number(e.target.value) })}
+            style={{ flex: 1, accentColor: 'var(--accent)' }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', minWidth: 40, textAlign: 'right' }}>
+            {settings.standReminderMinutes === 0 ? '关闭' : `${settings.standReminderMinutes} 分钟`}
+          </span>
+        </div>
+      </Field>
     </Section>
   </main>
 }
@@ -245,4 +336,39 @@ function formatShortcut(acc: string): string {
     .replace('Shift', '⇧')
     .replace('Alt', '⌥')
     .replace(/\+/g, '')
+}
+
+/** 答题快捷键展示/录制行（单键） */
+const QuizShortcutRow: React.FC<{
+  label: string
+  value: string
+  recording: boolean
+  onRecord: () => void
+  onCancel: () => void
+}> = ({ label, value, recording, onRecord, onCancel }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
+    <span style={{ fontSize: 14 }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {recording ? (
+        <>
+          <kbd style={s.kbd} className="recording">按下按键…</kbd>
+          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={onCancel}>取消</button>
+        </>
+      ) : (
+        <>
+          <kbd style={s.kbd}>{formatQuizKey(value)}</kbd>
+          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={onRecord}>修改</button>
+        </>
+      )}
+    </div>
+  </div>
+)
+
+/** 格式化答题快捷键显示 */
+function formatQuizKey(key: string): string {
+  const map: Record<string, string> = {
+    ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓',
+    Enter: '↵', Space: '␣', Backspace: '⌫', Tab: '⇥', Escape: 'Esc'
+  }
+  return map[key] || key
 }

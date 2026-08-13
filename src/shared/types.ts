@@ -53,6 +53,12 @@ export interface Settings {
   petVisible: boolean
   /** 全局快捷键 */
   shortcuts: ShortcutConfig
+  /** 答题快捷键 */
+  quizShortcuts: QuizShortcutConfig
+  /** 喝水提醒间隔（分钟），0 表示关闭 */
+  drinkReminderMinutes: number
+  /** 站立提醒间隔（分钟），0 表示关闭 */
+  standReminderMinutes: number
 }
 
 /** 快捷键配置 */
@@ -63,6 +69,22 @@ export interface ShortcutConfig {
   togglePet: string
   /** 打开设置 */
   showSettings: string
+}
+
+/** 答题快捷键配置 */
+export interface QuizShortcutConfig {
+  /** 选择选项 A */
+  selectA: string
+  /** 选择选项 B */
+  selectB: string
+  /** 选择选项 C */
+  selectC: string
+  /** 选择选项 D */
+  selectD: string
+  /** 下一题 */
+  nextQuestion: string
+  /** 上一题 */
+  prevQuestion: string
 }
 
 /** AI 聊天请求 */
@@ -96,7 +118,17 @@ export const DEFAULT_SETTINGS: Settings = {
     togglePanel: 'CommandOrControl+Shift+P',
     togglePet: 'CommandOrControl+Shift+H',
     showSettings: 'CommandOrControl+Shift+S'
-  }
+  },
+  quizShortcuts: {
+    selectA: 'A',
+    selectB: 'B',
+    selectC: 'C',
+    selectD: 'D',
+    nextQuestion: 'Enter',
+    prevQuestion: 'ArrowLeft'
+  },
+  drinkReminderMinutes: 30,
+  standReminderMinutes: 60
 }
 
 /** 通知 payload（主进程 → 渲染进程） */
@@ -105,4 +137,64 @@ export interface NotifyPayload {
   title: string
   body: string
   dueAt?: number
+}
+
+/** ====== 题库与答题 ====== */
+
+/** 题目类型 */
+export type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer'
+
+/** 难度 */
+export type Difficulty = 'easy' | 'medium' | 'hard'
+
+/** 单道题目 */
+export interface Question {
+  /** 唯一标识 */
+  id: string
+  /** 题目类型 */
+  type: QuestionType
+  /** 题目文本 */
+  question: string
+  /** 选项列表（选择题必填） */
+  options: string[]
+  /** 正确答案（选择题为选项索引，简答题为参考答案文本） */
+  answer: number | string
+  /** 题目解析 */
+  explanation: string
+  /** 难度 */
+  difficulty: Difficulty
+  /** 标签 */
+  tags: string[]
+}
+
+/** 题库 */
+export interface QuestionBank {
+  /** 题库名称 */
+  name: string
+  /** 题库描述 */
+  description: string
+  /** 题目列表 */
+  questions: Question[]
+}
+
+/** 题库索引（列表预览用） */
+export interface QuestionBankInfo {
+  /** 文件名（不含扩展名） */
+  fileName: string
+  /** 题库名称 */
+  name: string
+  /** 描述 */
+  description: string
+  /** 题目数量 */
+  questionCount: number
+}
+
+/** 答题记录 */
+export interface QuizRecord {
+  questionId: string
+  userAnswer: number | string
+  correct: boolean
+  answeredAt: number
+  /** AI 详细解析 */
+  aiExplanation?: string
 }
