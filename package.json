@@ -1,7 +1,7 @@
 {
-  "name": "desktop-pet-tasks",
-  "version": "0.1.0",
-  "description": "一只常驻桌面的宠物，帮你记录和提醒每天的任务",
+  "name": "PetPetGo",
+  "version": "0.1.2",
+  "description": "一只常驻桌面的宠物，帮你记录和提醒每天的任务，还有大厅嗯",
   "main": "out/main/index.js",
   "author": "KPBL Team",
   "license": "MIT",
@@ -24,6 +24,7 @@
     "electron": "^31.0.0",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.3.0",
+    "sharp": "^0.35.3",
     "typescript": "^5.5.3",
     "vite": "^5.3.3"
   },
