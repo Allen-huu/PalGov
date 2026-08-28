@@ -51,20 +51,20 @@ export const TaskItem: React.FC<Props> = ({ task, onToggle, onDelete }) => {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 12, fontWeight: 500,
+          fontSize: 13, fontWeight: 500,
           textDecoration: task.done ? 'line-through' : 'none',
           color: task.done ? 'var(--text-tertiary)' : 'var(--text-primary)',
-          wordBreak: 'break-word', lineHeight: 1.4,
+          wordBreak: 'break-word', lineHeight: 1.45,
         }}>
           {task.title}
         </div>
         {task.note && (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 3, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.45 }}>
             {task.note}
           </div>
         )}
         {task.dueAt && (
-          <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>{formatTime(task.dueAt)}</span>
           </div>
         )}

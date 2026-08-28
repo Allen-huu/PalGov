@@ -5,18 +5,20 @@ import { app } from 'electron'
 import { join } from 'node:path'
 import { JSONFilePreset } from 'lowdb/node'
 import { DB_FILE_NAME } from '../config/constants'
-import { DEFAULT_SETTINGS, Settings, Task } from '@shared/types'
+import { DEFAULT_SETTINGS, Settings, Task, WrongQuestion } from '@shared/types'
 
 /** 数据库结构 */
 export interface DbSchema {
   tasks: Task[]
   settings: Settings
+  wrongQuestions: WrongQuestion[]
 }
 
 /** 默认数据 */
 const defaultData: DbSchema = {
   tasks: [],
-  settings: { ...DEFAULT_SETTINGS }
+  settings: { ...DEFAULT_SETTINGS },
+  wrongQuestions: []
 }
 
 let dbPromise: ReturnType<typeof JSONFilePreset<DbSchema>> | null = null
@@ -34,6 +36,9 @@ async function getDb() {
     instance.data.settings = { ...DEFAULT_SETTINGS, ...(instance.data.settings ?? {}) }
     if (!Array.isArray(instance.data.tasks)) {
       instance.data.tasks = []
+    }
+    if (!Array.isArray(instance.data.wrongQuestions)) {
+      instance.data.wrongQuestions = []
     }
     await instance.write()
     dbPromise = Promise.resolve(instance)
@@ -96,4 +101,25 @@ export async function setSettings(patch: Partial<Settings>): Promise<Settings> {
   db.data.settings = { ...db.data.settings, ...patch }
   await db.write()
   return { ...db.data.settings }
+}
+export async function getWrongQuestions(): Promise<WrongQuestion[]> {
+  const db = await getDb()
+  return [...db.data.wrongQuestions]
+}
+
+export async function saveWrongQuestion(question: WrongQuestion): Promise<WrongQuestion> {
+  const db = await getDb()
+  const index = db.data.wrongQuestions.findIndex((item) => item.id === question.id)
+  if (index >= 0) db.data.wrongQuestions[index] = question
+  else db.data.wrongQuestions.push(question)
+  await db.write()
+  return question
+}
+
+export async function removeWrongQuestion(id: string): Promise<boolean> {
+  const db = await getDb()
+  const before = db.data.wrongQuestions.length
+  db.data.wrongQuestions = db.data.wrongQuestions.filter((item) => item.id !== id)
+  await db.write()
+  return db.data.wrongQuestions.length !== before
 }

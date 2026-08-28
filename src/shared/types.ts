@@ -50,6 +50,8 @@ export interface Settings {
   aiModel: string
   aiTemperature: number
   aiSendTaskContext: boolean
+  /** 答题页 AI 解析使用的模板，支持 {question}、{options}、{correctAnswer}、{userAnswer}、{explanation} */
+  quizAiPrompt: string
   petVisible: boolean
   /** 全局快捷键 */
   shortcuts: ShortcutConfig
@@ -113,6 +115,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiModel: 'deepseek-chat',
   aiTemperature: 0.7,
   aiSendTaskContext: true,
+  quizAiPrompt: '请简要解析这道题目：\n\n题目：{question}\n选项：{options}\n正确答案：{correctAnswer}\n我的答案：{userAnswer}\n题目解析：{explanation}\n\n请用 1-2 句话说明对错原因和需要掌握的知识点。',
   petVisible: true,
   shortcuts: {
     togglePanel: 'CommandOrControl+Shift+P',
@@ -157,8 +160,8 @@ export interface Question {
   question: string
   /** 选项列表（选择题必填） */
   options: string[]
-  /** 正确答案（选择题为选项索引，简答题为参考答案文本） */
-  answer: number | string
+  /** 正确答案（单选为 number，多选为 number[]，简答为 string） */
+  answer: number | number[] | string
   /** 题目解析 */
   explanation: string
   /** 难度 */
@@ -192,9 +195,23 @@ export interface QuestionBankInfo {
 /** 答题记录 */
 export interface QuizRecord {
   questionId: string
-  userAnswer: number | string
+  userAnswer: number | number[] | string
   correct: boolean
   answeredAt: number
   /** AI 详细解析 */
   aiExplanation?: string
+}
+
+/** 错题 */
+export interface WrongQuestion {
+  id: string
+  bankFileName: string
+  question: Question
+  userAnswer: number | number[] | string
+  wrongCount: number
+  reviewStage: number
+  lastReviewedAt: number
+  nextReviewAt: number
+  createdAt: number
+  updatedAt: number
 }

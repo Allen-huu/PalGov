@@ -1,15 +1,13 @@
-/**
- * 题库 IPC handler
- */
-import { ipcMain } from 'electron'
-import { listQuestionBanks, loadQuestionBank } from '../services/quizService'
+﻿import { ipcMain } from 'electron'
+import { addWrongQuestion, listQuestionBanks, listWrongQuestions, loadQuestionBank, submitWrongReview } from '../services/quizService'
+import { Question } from '@shared/types'
 
 export function registerQuizIpc(): void {
-  ipcMain.handle('quiz:listBanks', async () => {
-    return listQuestionBanks()
-  })
-
-  ipcMain.handle('quiz:loadBank', async (_evt, fileName: string) => {
-    return loadQuestionBank(fileName)
-  })
+  ipcMain.handle('quiz:listBanks', () => listQuestionBanks())
+  ipcMain.handle('quiz:loadBank', (_evt, fileName: string) => loadQuestionBank(fileName))
+  ipcMain.handle('quiz:addWrong', (_evt, payload: { bankFileName: string; question: Question; userAnswer: number | number[] | string }) =>
+    addWrongQuestion(payload.bankFileName, payload.question, payload.userAnswer))
+  ipcMain.handle('quiz:listWrong', () => listWrongQuestions())
+  ipcMain.handle('quiz:submitWrongReview', (_evt, payload: { id: string; correct: boolean }) =>
+    submitWrongReview(payload.id, payload.correct))
 }

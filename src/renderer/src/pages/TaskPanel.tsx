@@ -134,7 +134,7 @@ function Sidebar({ path, navigate }: { path: string; navigate: (to: string) => v
           title={tab.label}
         >
           <span style={{ fontSize: 16 }}>{tab.icon}</span>
-          <span style={{ fontSize: 10, marginTop: 2 }}>{tab.label}</span>
+          <span style={{ fontSize: 11, marginTop: 2 }}>{tab.label}</span>
         </button>
       ))}
     </div>
@@ -172,26 +172,26 @@ const s: Record<string, React.CSSProperties> = {
     padding: '8px 12px 6px',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
-  title: { fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' },
-  stats: { display: 'flex', gap: 4 },
+  title: { fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' },
+  stats: { display: 'flex', gap: 5 },
   statBadge: {
-    fontSize: 10, fontWeight: 600, padding: '2px 6px',
+    fontSize: 11, fontWeight: 600, padding: '3px 8px',
     borderRadius: 'var(--radius-full)', background: 'var(--accent-bg)', color: 'var(--accent)',
   },
   list: {
-    flex: 1, overflowY: 'auto', padding: '0 8px',
+    flex: 1, overflowY: 'auto', padding: '0 10px',
   },
-  centered: { textAlign: 'center' as const, color: 'var(--text-secondary)', padding: 20, fontSize: 12 },
+  centered: { textAlign: 'center' as const, color: 'var(--text-secondary)', padding: 22, fontSize: 13 },
   empty: {
-    textAlign: 'center' as const, padding: '20px 12px',
+    textAlign: 'center' as const, padding: '22px 14px',
     animation: 'fadeIn 0.3s ease',
   },
-  emptyIcon: { fontSize: 28, marginBottom: 4 },
-  emptyTitle: { fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' },
-  emptyDesc: { fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 },
+  emptyIcon: { fontSize: 30, marginBottom: 6 },
+  emptyTitle: { fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' },
+  emptyDesc: { fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 },
   sectionDivider: {
-    fontSize: 9, fontWeight: 600, color: 'var(--text-tertiary)',
-    padding: '4px 4px 2px', marginTop: 1, letterSpacing: '0.02em',
+    fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)',
+    padding: '6px 6px 3px', marginTop: 2, letterSpacing: '0.02em',
     textTransform: 'uppercase' as const,
   },
   footer: {

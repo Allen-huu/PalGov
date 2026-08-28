@@ -206,6 +206,13 @@ export const SettingsPage: React.FC = () => {
           onChange={(e) => update({ aiTemperature: Number(e.target.value) })}
           style={{ width: '100%', accentColor: 'var(--accent)' }} />
       </Field>
+      <Field label="答题 AI 解析提示词">
+        <textarea className="input-apple" value={settings.quizAiPrompt}
+          onChange={(e) => update({ quizAiPrompt: e.target.value })}
+          rows={8}
+          style={{ resize: 'vertical', lineHeight: 1.5, fontFamily: 'inherit' }} />
+        <p style={s.help}>可使用变量：{'{question}'}、{'{options}'}、{'{correctAnswer}'}、{'{userAnswer}'}、{'{explanation}'}。</p>
+      </Field>
       <Row label="发送任务上下文给 AI"><Toggle checked={settings.aiSendTaskContext} onChange={(v) => update({ aiSendTaskContext: v })} /></Row>
       <div style={s.inline}>
         <button className="btn-primary" style={{ fontSize: 13 }} disabled={testing} onClick={test}>{testing ? '测试中…' : '测试连接'}</button>

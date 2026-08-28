@@ -1,5 +1,37 @@
 /* ===== Apple-style Design System v2 — 米白奶油色调 ===== */
 
+@font-face {
+  font-family: 'MiSans';
+  src: url('/assets/fonts/MiSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: url('/assets/fonts/MiSans-Regular.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: url('/assets/fonts/MiSans-Regular.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MiSans';
+  src: url('/assets/fonts/MiSans-Regular.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* 背景与玻璃态 — 米白/奶油色 */
   --glass-bg: rgba(250, 247, 240, 0.92);
@@ -49,11 +81,13 @@
 
   /* 字体 */
   font-family:
+    'MiSans',
     -apple-system,
     BlinkMacSystemFont,
     'SF Pro Display',
     'SF Pro Text',
     'PingFang SC',
+    'Microsoft YaHei',
     'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;

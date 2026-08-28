@@ -1,5 +1,6 @@
 import React from 'react'
 import { useRouter } from '../router'
+export { WrongBookContent as WrongBookPage } from './WrongBookContent'
 
 const TABS = [
   { key: 'notes', path: '/task-panel', label: '笔记', icon: '📋' },
@@ -7,7 +8,7 @@ const TABS = [
   { key: 'wrong', path: '/wrong-book', label: '错题', icon: '📖' },
 ] as const
 
-export const WrongBookPage: React.FC = () => {
+const LegacyWrongBookPage: React.FC = () => {
   const { navigate, path } = useRouter()
   return <main style={s.root}>
     <Sidebar path={path} navigate={navigate} />
