@@ -1,5 +1,6 @@
-﻿import React from "react"
+import React from "react"
 import { WrongQuestion } from "@shared/types"
+import { PanelSidebar } from "../components/PanelSidebar"
 import { useRouter } from "../router"
 
 const intervals = ['10 分钟', '1 天', '2 天', '4 天', '7 天', '15 天', '30 天']
@@ -25,7 +26,7 @@ function checkAnswer(q: WrongQuestion["question"], userAnswer: number | number[]
 }
 
 export const WrongBookContent: React.FC = () => {
-  const { navigate, path } = useRouter()
+  const { navigate } = useRouter()
   const [items, setItems] = React.useState<WrongQuestion[]>([])
   const [reviewing, setReviewing] = React.useState<WrongQuestion | null>(null)
   const [answer, setAnswer] = React.useState<number | number[] | null>(null)
@@ -55,17 +56,17 @@ export const WrongBookContent: React.FC = () => {
       setError("提交失败，请重试")
     }
   }
-  if (reviewing) return <Review item={reviewing} answer={answer} setAnswer={setAnswer} submit={submit} cancel={() => { setReviewing(null); setAnswer(null) }} path={path} />
+  if (reviewing) return <Review item={reviewing} answer={answer} setAnswer={setAnswer} submit={submit} cancel={() => { setReviewing(null); setAnswer(null) }} />
   return (
-    <main style={s.root}>
-      <Sidebar path={path} navigate={navigate} />
+    <main className="panel-root">
+      <PanelSidebar />
       <div style={s.content}>
         <div style={s.head}>
           <div>
             <div style={s.title}>错题复习</div>
             <div style={s.hint}>艾宾浩斯间隔：{intervals.join("、")}</div>
           </div>
-          <button className="btn-ghost" onClick={refresh} style={{ fontSize: 11, padding: "3px 10px" }}>刷新</button>
+          <button className="btn-ghost btn-sm" onClick={refresh}>刷新</button>
         </div>
         {bankNames.length > 1 && (
           <div style={{ display: 'flex', gap: 3, marginBottom: 6, flexWrap: 'wrap' }}>
@@ -102,7 +103,7 @@ export const WrongBookContent: React.FC = () => {
         {error && (
           <div style={s.error}>
             <span>{error}</span>
-            <button className="btn-ghost" style={{ fontSize: 11, padding: "2px 8px" }} onClick={() => setError("")}>✕</button>
+            <button className="btn-ghost btn-sm" style={{ padding: '2px 8px' }} onClick={() => setError("")}>✕</button>
           </div>
         )}
         {items.length === 0 ? (
@@ -117,7 +118,7 @@ export const WrongBookContent: React.FC = () => {
             <div style={s.summary}>待复习 <b>{due.length}</b> 题 · 共 {items.length} 题</div>
             {due.length ? (
               <>
-                <div style={s.sectionTitle}>现在该复习</div>
+                <div className="section-title">现在该复习</div>
                 {due.map((item) => <Row key={item.id} item={item} onReview={() => setReviewing(item)} />)}
               </>
             ) : (
@@ -125,7 +126,7 @@ export const WrongBookContent: React.FC = () => {
             )}
             {later.length > 0 && (
               <>
-                <div style={s.sectionTitle}>接下来</div>
+                <div className="section-title">接下来</div>
                 {later.map((item) => <Row key={item.id} item={item} />)}
               </>
             )}
@@ -142,10 +143,9 @@ interface ReviewProps {
   setAnswer: React.Dispatch<React.SetStateAction<number | number[] | null>>
   submit: () => void
   cancel: () => void
-  path: string
 }
 
-function Review({ item, answer, setAnswer, submit, cancel, path }: ReviewProps) {
+function Review({ item, answer, setAnswer, submit, cancel }: ReviewProps) {
   const { navigate } = useRouter()
   const done = answer !== null
   const correct = checkAnswer(item.question, answer)
@@ -170,11 +170,11 @@ function Review({ item, answer, setAnswer, submit, cancel, path }: ReviewProps) 
   }
 
   return (
-    <main style={s.root}>
-      <Sidebar path={path} navigate={navigate} />
+    <main className="panel-root">
+      <PanelSidebar />
       <div style={s.content}>
         <div style={s.head}>
-          <button className="btn-ghost" onClick={cancel} style={{ fontSize: 11, padding: "3px 10px" }}>← 返回</button>
+          <button className="btn-ghost btn-sm" onClick={cancel}>← 返回</button>
           <span style={s.hint}>第 {item.reviewStage + 1}/{7} 阶段复习</span>
         </div>
         <div style={s.question}>{item.question.question}</div>
@@ -196,38 +196,39 @@ function Review({ item, answer, setAnswer, submit, cancel, path }: ReviewProps) 
           return (
             <button
               key={index}
+              className="quiz-option"
               disabled={done}
               onClick={() => handleClick(index)}
-              style={{ ...s.option, background: bg, border, opacity }}
+              style={{ background: bg, border, opacity }}
             >
-              <span style={isMulti ? s.optCheckbox : s.optionIdx}>
+              <span className={isMulti ? 'opt-check' : 'opt-idx'}>
                 {isMulti ? (isUserSelected ? "☑" : "☐") : String.fromCharCode(65 + index)}
               </span>
-              <span style={{ flex: 1, fontSize: 12 }}>{option.replace(/^[A-D][.、]\s?/, "")}</span>
-              {done && isCorrectAnswer && <span style={{ fontSize: 13, flexShrink: 0 }}>✓</span>}
-              {isWrong && <span style={{ fontSize: 13, flexShrink: 0 }}>✗</span>}
+              <span className="opt-text">{option.replace(/^[A-D][.、]\s?/, "")}</span>
+              {done && isCorrectAnswer && <span style={{ fontSize: 'var(--text-sm)', flexShrink: 0 }}>✓</span>}
+              {isWrong && <span style={{ fontSize: 'var(--text-sm)', flexShrink: 0 }}>✗</span>}
             </button>
           )
         })}
         {isMulti && !done && answer !== null && (
-          <button className="btn-primary" onClick={submit} style={{ marginTop: 6, fontSize: 12, padding: "5px 0", width: "100%", textAlign: "center" }}>
+          <button className="btn-primary" onClick={submit} style={{ marginTop: 6, padding: "5px 0", width: "100%", textAlign: "center" }}>
             确认选择
           </button>
         )}
         {done && (
           <div style={s.feedback}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
-              <strong style={{ color: correct ? "var(--success)" : "var(--danger)", fontSize: 12 }}>
+              <strong style={{ color: correct ? "var(--success)" : "var(--danger)", fontSize: 'var(--text-sm)' }}>
                 {correct ? "✓ 回答正确" : "✗ 回答错误"}
               </strong>
             </div>
             {item.question.explanation && (
-              <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 8 }}>
+              <div style={{ fontSize: 'var(--text-sm)', color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 8 }}>
                 {item.question.explanation}
               </div>
             )}
             {!isMulti && (
-              <button className="btn-primary" onClick={submit} style={{ fontSize: 12, padding: "5px 14px" }}>
+              <button className="btn-primary btn-sm" onClick={submit}>
                 {submitLabel}
               </button>
             )}
@@ -248,7 +249,7 @@ function Row({ item, onReview }: { item: WrongQuestion; onReview?: () => void })
         </div>
       </div>
       {onReview && (
-        <button className="btn-primary" onClick={onReview} style={{ fontSize: 11, padding: "4px 12px", flexShrink: 0 }}>
+        <button className="btn-primary btn-sm" onClick={onReview} style={{ flexShrink: 0 }}>
           复习
         </button>
       )}
@@ -256,58 +257,7 @@ function Row({ item, onReview }: { item: WrongQuestion; onReview?: () => void })
   )
 }
 
-function Sidebar({ path, navigate }: { path: string; navigate: (to: string) => void }) {
-  const active = path === "/quiz" ? "quiz" : path === "/wrong-book" ? "wrong" : "notes"
-  const tabs = [
-    { key: "notes", to: "/task-panel", label: "笔记", icon: "📋" },
-    { key: "quiz", to: "/quiz", label: "答题", icon: "✏️" },
-    { key: "wrong", to: "/wrong-book", label: "错题", icon: "📖" },
-  ] as const
-  return (
-    <div style={s.sidebar}>
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => navigate(tab.to)}
-          style={{
-            ...s.sidebarItem,
-            background: active === tab.key ? "var(--accent-bg)" : "transparent",
-            color: active === tab.key ? "var(--accent)" : "var(--text-tertiary)",
-            fontWeight: active === tab.key ? 600 : 400,
-          }}
-          title={tab.label}
-        >
-          <span style={{ fontSize: 16 }}>{tab.icon}</span>
-          <span style={{ fontSize: 11, marginTop: 2 }}>{tab.label}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
 const s: Record<string, React.CSSProperties> = {
-  root: {
-    width: "100%", height: "100%", display: "flex",
-    background: "var(--panel-bg)",
-    backdropFilter: "var(--glass-blur)",
-    WebkitBackdropFilter: "var(--glass-blur)",
-    borderRadius: "var(--radius-lg)",
-    border: "1px solid var(--panel-border)",
-    boxShadow: "var(--shadow-lg)",
-    overflow: "hidden",
-  },
-  sidebar: {
-    width: 56, flexShrink: 0, display: "flex", flexDirection: "column",
-    gap: 2, padding: "8px 4px",
-    borderRight: "1px solid var(--panel-border)",
-    background: "rgba(0,0,0,0.02)",
-  },
-  sidebarItem: {
-    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-    gap: 1, padding: "8px 4px", borderRadius: 10,
-    border: "none", cursor: "pointer", transition: "all 0.15s ease",
-    background: "transparent", outline: "none",
-  },
   content: {
     flex: 1, minHeight: 0, display: "flex", flexDirection: "column",
     overflowY: "auto", padding: "6px 8px",
@@ -317,23 +267,24 @@ const s: Record<string, React.CSSProperties> = {
     marginBottom: 7,
   },
   title: {
-    fontSize: 15, fontWeight: 700, color: "var(--text-primary)",
+    fontSize: 'var(--text-lg)', fontWeight: 600, color: "var(--text-primary)", letterSpacing: '-0.02em',
   },
   hint: {
-    marginTop: 3, fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.4,
+    marginTop: 3, fontSize: 'var(--text-xs)', color: "var(--text-tertiary)", lineHeight: 1.4,
   },
   summary: {
-    padding: "6px 8px", marginBottom: 6,
-    background: "rgba(255,159,10,.08)",
-    borderRadius: 5,
-    fontSize: 12, color: "var(--text-primary)",
+    padding: "6px 10px", marginBottom: 6,
+    background: "var(--surface)",
+    border: "1px solid var(--hairline)",
+    borderRadius: "var(--radius-md)",
+    fontSize: 'var(--text-sm)', color: "var(--text-primary)",
   },
   error: {
     padding: "6px 10px", marginBottom: 6,
     background: "var(--danger-bg)",
     color: "var(--danger)",
-    borderRadius: 5,
-    fontSize: 12,
+    borderRadius: "var(--radius-sm)",
+    fontSize: 'var(--text-sm)',
     display: "flex", alignItems: "center", justifyContent: "space-between",
   },
   empty: {
@@ -342,61 +293,38 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: "center",
     padding: 24, lineHeight: 1.6,
   },
-  emptyEmoji: { fontSize: 36, marginBottom: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: 700, color: "var(--text-primary)" },
-  emptyDesc: { marginTop: 8, color: "var(--text-secondary)", fontSize: 12 },
+  emptyEmoji: { fontSize: 'var(--text-2xl)', marginBottom: 8 },
+  emptyTitle: { fontSize: 'var(--text-lg)', fontWeight: 600, color: "var(--text-primary)" },
+  emptyDesc: { marginTop: 8, color: "var(--text-secondary)", fontSize: 'var(--text-sm)' },
   emptyDue: {
     textAlign: "center", padding: 12,
-    color: "var(--text-secondary)", fontSize: 12,
-    background: "rgba(0,0,0,.02)",
-    borderRadius: 5,
+    color: "var(--text-secondary)", fontSize: 'var(--text-sm)',
+    background: "var(--surface)",
+    border: "1px solid var(--hairline)",
+    borderRadius: "var(--radius-md)",
     marginBottom: 6,
-  },
-  sectionTitle: {
-    fontSize: 12, fontWeight: 600,
-    color: "var(--text-secondary)",
-    marginTop: 8, marginBottom: 4,
-    paddingLeft: 2,
   },
   row: {
     display: "flex", gap: 6, alignItems: "center",
-    padding: "6px 8px", marginBottom: 3,
-    background: "rgba(0,0,0,.025)",
-    borderRadius: 5,
+    padding: "8px 10px", marginBottom: 4,
+    background: "var(--surface)",
+    border: "1px solid var(--hairline)",
+    borderRadius: "var(--radius-md)",
   },
   rowText: {
     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-    fontSize: 13, color: "var(--text-primary)",
+    fontSize: 'var(--text-md)', color: "var(--text-primary)",
   },
   question: {
-    fontSize: 14, fontWeight: 600,
+    fontSize: 'var(--text-md)', fontWeight: 600,
     color: "var(--text-primary)",
-    lineHeight: 1.5, marginBottom: 6,
-  },
-  option: {
-    display: "flex", gap: 7, alignItems: "center",
-    width: "100%", padding: "6px 9px", marginBottom: 3,
-    textAlign: "left",
-    borderRadius: 6, cursor: "pointer",
-    transition: "all 0.1s ease",
-    fontFamily: "inherit",
-  },
-  optionIdx: {
-    width: 20, height: 20, borderRadius: "50%",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 11, fontWeight: 700,
-    background: "rgba(0,0,0,0.06)",
-    color: "var(--text-secondary)",
-    flexShrink: 0,
-  },
-  optCheckbox: {
-    width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center",
-    fontSize: 14, flexShrink: 0,
+    lineHeight: 1.4, marginBottom: 6,
   },
   feedback: {
-    marginTop: 6, padding: "7px 8px",
-    background: "rgba(0,0,0,.025)",
-    borderRadius: 6,
+    marginTop: 6, padding: "8px 10px",
+    background: "var(--surface)",
+    border: "1px solid var(--hairline)",
+    borderRadius: "var(--radius-md)",
     lineHeight: 1.5,
   },
 }

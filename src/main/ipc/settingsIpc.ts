@@ -4,6 +4,7 @@ import { getSettings, setSettings } from '../services/storeService'
 import { applyShortcuts } from '../services/shortcutService'
 import { restartDrinkReminder } from '../services/drinkReminderService'
 import { restartStandReminder } from '../services/standReminderService'
+import { startBiliPolling } from '../services/bilibiliService'
 
 export function registerSettingsIpc(): void {
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, async () => {
@@ -36,6 +37,15 @@ export function registerSettingsIpc(): void {
     // 站立提醒间隔变更时重启
     if (patch.standReminderMinutes !== undefined) {
       restartStandReminder()
+    }
+
+    // B站跟踪配置变更时重启轮询（startBiliPolling 内部会判断开关）
+    if (
+      patch.biliEnabled !== undefined ||
+      patch.biliIntervalSec !== undefined ||
+      patch.biliCookie !== undefined
+    ) {
+      startBiliPolling()
     }
 
     return settings

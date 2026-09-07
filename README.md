@@ -1,421 +1,404 @@
-# 🐱 桌面宠物任务助手
+<div align="center">
 
-> 一只常驻 Windows 桌面的小宠物，帮你记录和提醒每天的任务。右键添加、双击完成、到点弹气泡，轻量不打扰。
+# PalGo
 
-!\[banner](docs/assets/banner.png)
+**一只常驻桌面的水豚，陪你刷题、追更、管理待办**
 
-<p align="center">
-  <a href="./docs/DESIGN.md"><img alt="设计文档" src="https://img.shields.io/badge/📝-设计文档-ffb86c?style=flat-square"></a>
-  <img alt="Electron" src="https://img.shields.io/badge/Electron-31-47848f?style=flat-square\&logo=electron\&logoColor=white">
-  <img alt="React" src="https://img.shields.io/badge/React-18-61dafb?style=flat-square\&logo=react\&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square\&logo=typescript\&logoColor=white">
-  <img alt="Vite" src="https://img.shields.io/badge/Vite-5-646cff?style=flat-square\&logo=vite\&logoColor=white">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green?style=flat-square">
-  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square\&logo=windows\&logoColor=white">
-</p>
+[![Electron](https://img.shields.io/badge/Electron-31-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white)](#)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-\---
+桌面宠物 × 任务管理 × 刷题复习 × B站动态追踪，全部本地存储，离线可用。
 
-## ✨ 功能特性
+</div>
 
-|功能|描述|状态|
-|-|-|-|
-|🐾 **常驻陪伴**|透明置顶窗口，宠物常驻桌面右下角|✅|
-|🖱️ **自由拖拽**|鼠标按住宠物即可拖到屏幕任意位置|✅|
-|📋 **任务管理**|添加 / 完成 / 删除 / 备注 / 定时|✅|
-|⏰ **智能提醒**|到点弹气泡 + 系统通知 + 跳跃动画|✅|
-|🎨 **多种皮肤**|猫咪 / 小狗 / 机器人（纯 SVG 绘制）|✅|
-|🗂️ **系统托盘**|托盘图标右键菜单，失焦自动隐藏面板|✅|
-|⚙️ **设置面板**|置顶 / 提醒 / 声音 / 开机自启|✅|
-|⌨️ **全局快捷键**|`Ctrl+Shift+P` 一键呼出宠物|✅|
-|💾 **离线可用**|数据本地存储，零依赖云端|✅|
-|📦 **一键打包**|electron-builder 生成 NSIS 安装包|✅|
+---
 
-\---
+## 目录
 
-## 🎯 核心交互一览
+- [简介](#简介)
+- [功能特性](#功能特性)
+- [界面预览](#界面预览)
+- [快速开始](#快速开始)
+- [项目结构](#项目结构)
+- [系统架构](#系统架构)
+- [开发指南](#开发指南)
+- [打包发布](#打包发布)
+- [常见问题](#常见问题)
+- [贡献指南](#贡献指南)
+- [许可证](#许可证)
 
-```
-┌────────────────────────────────────────────────────────────┐
-│                    桌面宠物交互方式                          │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│   左键单击  ───►  展开 / 收起任务面板                         │
-│                                                            │
-│   左键双击  ───►  快速添加任务（聚焦输入框）                  │
-│                                                            │
-│   右键单击  ───►  上下文菜单                                │
-│                   ├── 📋 添加任务                          │
-│                   ├── ⚙️ 设置                             │
-│                   └── 🚪 退出                             │
-│                                                            │
-│   鼠标拖拽  ───►  移动宠物到任意位置                         │
-│                                                            │
-│   鼠标悬停  ───►  显示今日待办概要                          │
-│                                                            │
-│   任务到点  ───►  🔔 系统通知 + 💬 气泡 + 🐱 跳跃动画        │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-```
+---
 
-\---
+## 简介
 
-## 🏗️ 技术栈
+PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻你的桌面右下角。它不只是宠物——双击它会展开一个毛玻璃面板，里面装着你的待办事项、题库练习、错题复习和关注的 B 站 UP 主动态。到点的任务、新发布的动态会通过系统通知推给你，久坐了、该喝水了它也会气泡提醒。
 
-|层级|技术|选型理由|
-|-|-|-|
-|桌面框架|**Electron 31**|Windows 体验最稳定，生态成熟|
-|构建工具|**electron-vite + Vite 5**|极速 HMR，原生 ESM|
-|渲染层|**React 18**|组件化便于维护|
-|语言|**TypeScript 5**|类型安全|
-|样式|**CSS + CSS Variables**|零运行时开销，毛玻璃效果|
-|本地存储|**lowdb (JSON)**|轻量、零依赖、便于调试|
-|打包|**electron-builder**|一键生成 NSIS 安装包|
+所有数据保存在本地 JSON 文件中，不依赖任何云服务。
 
-\---
+### 核心场景
 
-## 📁 项目结构
+- **备考刷题**：内置 JSON 题库（教师招聘、事业编、408 等），答题即时判分，答错自动进错题本
+- **记忆巩固**：错题按艾宾浩斯遗忘曲线安排 7 阶段间隔复习（10 分钟 → 30 天）
+- **动态追踪**：关注 B 站 UP 主，新动态实时系统通知
+- **日常待办**：任务管理 + 到点提醒 + 健康（喝水/久坐）提醒
 
-```
-desktop-pet-tasks/
-├── 📂 docs/                       # 项目文档
-│   ├── DESIGN.md                  # 初步设计文档
-│   └── assets/                    # 文档图片
-│       └── banner.jpg
-│
-├── 📂 src/
-│   ├── 📂 main/                   # 🔵 主进程（Node.js 环境）
-│   │   ├── index.ts               # 主进程入口
-│   │   ├── 📂 windows/            # 窗口管理
-│   │   │   ├── petWindow.ts       #   宠物透明窗口
-│   │   │   ├── taskWindow.ts      #   任务面板窗口
-│   │   │   └── settingsWindow.ts  #   设置窗口
-│   │   ├── 📂 services/           # 业务服务
-│   │   │   ├── storeService.ts    #   lowdb 封装
-│   │   │   ├── taskService.ts     #   任务 CRUD
-│   │   │   ├── notifyService.ts   #   提醒服务
-│   │   │   └── trayService.ts     #   系统托盘
-│   │   ├── 📂 ipc/                # IPC 处理器
-│   │   │   ├── taskIpc.ts
-│   │   │   ├── settingsIpc.ts
-│   │   │   └── windowIpc.ts
-│   │   └── 📂 config/
-│   │       └── constants.ts       # 常量定义
-│   │
-│   ├── 📂 preload/                # 🟡 预加载脚本
-│   │   └── index.ts               # contextBridge 暴露安全 API
-│   │
-│   ├── 📂 renderer/               # 🟢 渲染进程（React）
-│   │   ├── index.html
-│   │   └── 📂 src/
-│   │       ├── main.tsx           # React 入口
-│   │       ├── router.tsx         # 极简 hash 路由
-│   │       ├── 📂 pages/
-│   │       │   ├── Pet.tsx        #   宠物页
-│   │       │   ├── TaskPanel.tsx  #   任务面板
-│   │       │   └── Settings.tsx   #   设置页
-│   │       ├── 📂 components/
-│   │       │   ├── PetSprite.tsx  #   宠物 SVG 精灵
-│   │       │   └── TaskItem.tsx   #   任务项
-│   │       ├── 📂 hooks/
-│   │       │   ├── useTask.ts     #   任务数据 Hook
-│   │       │   └── useDrag.ts     #   拖拽 Hook
-│   │       ├── 📂 styles/
-│   │       │   └── global.css
-│   │       └── 📂 utils/
-│   │           ├── date.ts        #   日期工具
-│   │           └── asset.ts       #   资源路径解析
-│   │
-│   └── 📂 shared/                 # 🟣 主/渲染进程共享
-│       └── types.ts               # TypeScript 类型
-│
-├── 📂 resources/                  # 应用资源
-│   ├── icon.png                   # 通用图标
-│   ├── icon.ico                   # Windows 图标
-│   ├── icon.icns                  # macOS 图标
-│   └── tray-icon.png              # 托盘图标
-│
-├── package.json
-├── electron.vite.config.ts
-├── electron-builder.yml           # 打包配置
-├── tsconfig.json / tsconfig.node.json / tsconfig.web.json
-└── README.md                      # 本文件
-```
+---
 
-### 系统架构
+## 功能特性
 
-```mermaid
-graph TB
-    subgraph MainProcess\[主进程 Main Process - Node.js]
-        WM\[WindowManager<br/>窗口管理]
-        TS\[TaskService<br/>任务服务]
-        NS\[NotifyService<br/>提醒服务]
-        TR\[TrayService<br/>托盘]
-        DB\[(lowdb<br/>tasks.json)]
-    end
+### 桌面宠物
 
-    subgraph RendererProcess\[渲染进程 Renderer - Chromium + React]
-        PET\[PetSprite<br/>宠物精灵]
-        PANEL\[TaskPanel<br/>任务面板]
-        SETTINGS\[Settings<br/>设置页]
-    end
+| 功能 | 说明 |
+|------|------|
+| 常驻陪伴 | 110×110 透明置顶窗口，可拖拽到屏幕任意位置 |
+| 帧动画 | 竖排 Sprite Sheet 逐帧动画，6 种状态（待机/开心/警觉/拖拽/答对/答错），加载失败自动降级 SVG |
+| 对话气泡 | 头顶气泡显示提醒内容，4 秒自动消失 |
+| 双击交互 | 双击宠物展开/收起任务面板，全快捷键操作 |
 
-    subgraph Preload\[Preload - contextBridge]
-        API\[window.pet API]
-    end
+### 任务管理
 
-    WM -->|创建窗口| RendererProcess
-    TS -->|读写| DB
-    NS -->|定时检查| TS
-    NS -->|发送通知| PET
+| 功能 | 说明 |
+|------|------|
+| 任务 CRUD | 标题 + 备注 + 到期时间，回车快速添加 |
+| 按日管理 | 任务归属日期，今日待办/已完成数量统计 |
+| 到点提醒 | 30 秒轮询到期任务，系统通知（可带声音）+ 宠物警觉动画 |
 
-    RendererProcess -->|调用 API| Preload
-    Preload -->|IPC invoke| MainProcess
-```
+### 刷题练习
 
-\---
+| 功能 | 说明 |
+|------|------|
+| JSON 题库 | 读取 `resources/question-banks/` 下的 JSON 文件，可自由扩展 |
+| 题型支持 | 单选 / 多选 / 判断 / 简答 |
+| 即时判分 | 选中即判，对错高亮，立即显示解析 |
+| 答题快捷键 | A/B/C/D 选择、Enter 下一题等，全部可自定义录制 |
+| 进度持久化 | 按题库保存进度与答题记录，支持「继续答题」 |
 
-## 🚀 快速开始
+### 错题复习（艾宾浩斯）
+
+| 功能 | 说明 |
+|------|------|
+| 自动收集 | 答错即入库，记录错次与答案 |
+| 7 阶段间隔 | 10 分钟 → 1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天 |
+| 智能调度 | 复习答对进入下一阶段，答错回到第一阶段；通过全部阶段自动移出 |
+| 到期管理 | 「现在该复习 / 接下来」分组展示剩余时间，支持按题库筛选 |
+
+### AI 解析
+
+| 功能 | 说明 |
+|------|------|
+| 双服务商 | DeepSeek 或任意 OpenAI Chat Completions 兼容接口 |
+| 答题解析 | 答完题一键请求 AI 解析，提示词模板可自定义变量 |
+| 可靠性 | 30 秒超时 + 429/5xx 退避重试，Key 仅保存在本机 |
+
+### B 站动态追踪
+
+| 功能 | 说明 |
+|------|------|
+| 添加关注 | 支持空间链接 / UID / b23.tv 短链 |
+| 定时轮询 | 默认 30 秒（15–300 秒可调），WBI 签名 + buvid 指纹绕过风控 |
+| 新动态通知 | 系统通知（点击直达）+ 宠物气泡 + 动态页实时刷新 |
+| 历史回填 | 展示最近 3 天动态，按日期分组，启动时自动补齐离线期间缺口 |
+
+### 系统集成
+
+| 功能 | 说明 |
+|------|------|
+| 系统托盘 | 显示宠物 / 打开设置 / 退出 |
+| 全局快捷键 | `Ctrl+Shift+P` 面板 · `Ctrl+Shift+H` 宠物 · `Ctrl+Shift+S` 设置（可自定义） |
+| 健康提醒 | 喝水（默认 30 分钟）与久坐站立（默认 60 分钟）气泡提醒 |
+| 开机自启 | 系统托盘常驻，单实例锁 |
+
+---
+
+## 界面预览
+
+> 整体采用 Apple 设计语言：SF 字体栈、iOS 系统色板（`#F2F2F7` 分组背景、白色表面卡片、发丝分隔线）、毛玻璃振动质感、iOS 分组列表模式。
+
+![banner](docs/assets/banner.png)
+
+---
+
+## 快速开始
 
 ### 环境要求
 
-|工具|最低版本|备注|
-|-|-|-|
-|Node.js|18+|推荐 20 LTS|
-|npm|9+|或 pnpm / yarn|
-|Git|2.30+||
-|Windows|10 / 11|当前主要支持平台|
+| 依赖 | 版本 | 说明 |
+|------|------|------|
+| Node.js | ≥ 18 | 推荐 20 LTS |
+| npm | ≥ 9 | 或 pnpm / yarn |
+| Git | ≥ 2.30 | |
+| Windows | 10 / 11 | 当前主要支持平台 |
 
-### 1️⃣ 克隆仓库
-
-```bash
-git clone <your-repo-url> desktop-pet-tasks
-cd desktop-pet-tasks
-```
-
-### 2️⃣ 安装依赖
+### 安装与运行
 
 ```bash
+# 1. 克隆仓库
+git clone https://github.com/Allen-huu/PalGov.git
+cd PalGov
+
+# 2. 安装依赖
 npm install
-```
 
-> 💡 如果在中国大陆，建议使用淘宝镜像加速：
-> ```bash
-> npm config set registry https://registry.npmmirror.com
-> npm config set electron\_mirror https://registry.npmmirror.com/-/binary/electron/
-> npm config set electron\_builder\_binaries\_mirror https://registry.npmmirror.com/-/binary/electron-builder-binaries/
-> ```
-
-### 3️⃣ 启动开发模式
-
-```bash
+# 3. 启动开发模式（HMR 热更新）
 npm run dev
 ```
 
-启动后：
+启动后水豚出现在屏幕右下角，双击呼出面板即可开始使用。
 
-* 🐱 一只橘色小猫出现在屏幕右下角
-* 🖱️ 左键单击宠物展开任务面板
-* 🖱️ 右键单击宠物显示菜单
-* 🖱️ 按住宠物可拖拽到任意位置
+> **中国大陆网络建议**：安装前配置镜像加速
+>
+> ```bash
+> npm config set registry https://registry.npmmirror.com
+> npm config set electron_mirror https://registry.npmmirror.com/-/binary/electron/
+> npm config set electron_builder_binaries_mirror https://registry.npmmirror.com/-/binary/electron-builder-binaries/
+> ```
 
-\---
+---
 
-## 🛠️ 本地测试与开发
+## 项目结构
 
-### 开发命令一览
+```
+PalGo/
+├── docs/                            # 项目文档
+│   ├── DESIGN.md                    # 架构设计文档
+│   ├── CAPYBARA_DESIGN.md           # 水豚形象设计
+│   └── assets/                      # 文档图片
+│
+├── resources/                       # 应用资源（打包进安装包）
+│   ├── icon.ico / icon.png          # 应用图标
+│   ├── tray-icon.png                # 托盘图标
+│   └── question-banks/              # JSON 题库目录
+│
+├── src/
+│   ├── main/                        # 🔵 主进程（Node.js）
+│   │   ├── index.ts                 # 入口：生命周期、单实例锁
+│   │   ├── windows/                 # 窗口管理
+│   │   │   ├── petWindow.ts         #   宠物透明窗口
+│   │   │   ├── taskWindow.ts        #   任务面板窗口
+│   │   │   └── settingsWindow.ts    #   设置窗口
+│   │   ├── services/                # 业务服务
+│   │   │   ├── storeService.ts      #   lowdb 持久化
+│   │   │   ├── taskService.ts       #   任务 CRUD
+│   │   │   ├── notifyService.ts     #   任务/喝水/久坐提醒
+│   │   │   ├── quizService.ts       #   题库加载 + 错题调度
+│   │   │   ├── aiService.ts         #   AI 接口调用
+│   │   │   ├── bilibiliService.ts   #   B站动态轮询（WBI 签名）
+│   │   │   ├── shortcutService.ts   #   全局快捷键
+│   │   │   └── trayService.ts       #   系统托盘
+│   │   ├── ipc/                     # IPC 处理器
+│   │   └── config/constants.ts      # 常量
+│   │
+│   ├── preload/                     # 🟡 预加载（contextBridge 安全 API）
+│   │   └── index.ts                 #   window.pet.* 五组 API
+│   │
+│   ├── renderer/                    # 🟢 渲染进程（React）
+│   │   └── src/
+│   │       ├── main.tsx             #   入口
+│   │       ├── router.tsx           #   极简 hash 路由
+│   │       ├── pages/               #   5 个页面
+│   │       │   ├── Pet.tsx          #     宠物页（动画 + 气泡 + 拖拽）
+│   │       │   ├── TaskPanel.tsx    #     任务面板
+│   │       │   ├── Quiz.tsx         #     答题页
+│   │       │   ├── WrongBookContent.tsx # 错题复习页
+│   │       │   ├── Bilibili.tsx     #     B站动态页
+│   │       │   └── Settings.tsx     #     设置页
+│   │       ├── components/          #   共享组件
+│   │       │   ├── PanelSidebar.tsx #     面板侧边栏
+│   │       │   ├── PetSprite.tsx    #     精灵动画
+│   │       │   └── TaskItem.tsx     #     任务行
+│   │       ├── hooks/               #   useTask / useDrag
+│   │       ├── styles/global.css    #   设计系统（Apple 字阶令牌）
+│   │       └── utils/               #   date / asset
+│   │
+│   └── shared/                      # 🟣 主/渲染进程共享
+│       ├── types.ts                  #   类型定义
+│       └── ipcChannels.ts           #   IPC 通道名
+│
+├── scripts/generate-ico.mjs         # 图标生成脚本
+├── tools/sprite-stitcher.html       # 精灵图拼接工具
+├── electron.vite.config.ts
+├── electron-builder.yml
+└── package.json
+```
 
-|命令|作用|
-|-|-|
-|`npm run dev`|启动开发模式（HMR 热更新）|
-|`npm run build`|构建生产产物到 `out/`|
-|`npm run preview`|预览构建产物|
-|`npm run typecheck`|TypeScript 类型检查|
-|`npm run build:win`|打包 Windows 安装包到 `release/`|
-|`npm run build:mac`|打包 macOS dmg|
-|`npm run build:linux`|打包 Linux AppImage|
+---
+
+## 系统架构
+
+```mermaid
+graph TB
+    subgraph Main["主进程 Main Process (Node.js)"]
+        WM["窗口管理<br/>宠物 / 面板 / 设置"]
+        TS["任务服务"]
+        NS["提醒服务<br/>任务 / 喝水 / 久坐"]
+        QS["题库服务<br/>艾宾浩斯调度"]
+        AIS["AI 服务"]
+        BS["B站服务<br/>WBI 签名轮询"]
+        TR["托盘 / 快捷键"]
+        DB[("lowdb<br/>tasks.json")]
+    end
+
+    subgraph Renderer["渲染进程 (Chromium + React)"]
+        PET["宠物页<br/>动画 / 气泡"]
+        PANEL["任务面板<br/>笔记 / 答题 / 错题 / 动态"]
+        SETTINGS["设置页"]
+    end
+
+    PRELOAD["Preload<br/>contextBridge → window.pet"]
+
+    WM --> Renderer
+    TS --> DB
+    NS -->|定时检查| TS
+    BS -->|30s 轮询| BILI["B站 API"]
+    AIS -->|Chat| LLM["DeepSeek / OpenAI 兼容"]
+
+    Renderer -->|invoke| PRELOAD
+    PRELOAD -->|IPC| Main
+```
+
+**数据流向**：渲染进程通过 `window.pet.*` 调用 preload 暴露的 API → IPC invoke 到主进程 → 服务层读写 lowdb / 调用外部接口 → 事件推回渲染进程刷新 UI。
+
+---
+
+## 开发指南
+
+### 常用命令
+
+| 命令 | 作用 |
+|------|------|
+| `npm run dev` | 启动开发模式（HMR） |
+| `npm run build` | 构建生产产物到 `out/` |
+| `npm run typecheck` | TypeScript 类型检查（node + web） |
+| `npm run build:win` | 打包 Windows NSIS 安装包 |
+
+### 自定义题库
+
+在 `resources/question-banks/` 新建 JSON 文件：
+
+```json
+{
+  "name": "我的题库",
+  "description": "题库描述",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single_choice",
+      "question": "题目内容",
+      "options": ["选项A", "选项B", "选项C", "选项D"],
+      "answer": 0,
+      "explanation": "解析"
+    }
+  ]
+}
+```
+
+题型：`single_choice` 单选 · `multiple_choice` 多选（`answer` 为数组） · `true_false` 判断 · `short_answer` 简答。
+
+### 添加宠物皮肤
+
+1. 用 `tools/sprite-stitcher.html` 将动画帧竖向拼接为 Sprite Sheet
+2. 放入 `src/renderer/public/assets/sprites/`
+3. 动画加载失败时会自动降级为内置 SVG 水豚
 
 ### 调试技巧
 
-1. **打开 DevTools**
+- **打开 DevTools**：在 `src/main/windows/petWindow.ts` 中加 `win.webContents.openDevTools({ mode: 'detach' })`
+- **查看本地数据**：`%APPDATA%/PalGo/tasks.json`（任务 / 设置 / 错题 / B站关注）
+- **验证提醒**：添加一个 1 分钟后到期的任务，30 秒内即可看到系统通知 + 宠物动画
 
-   开发模式下，宠物窗口默认隐藏 DevTools（避免影响透明窗口交互）。可在 [src/main/windows/petWindow.ts](src/main/windows/petWindow.ts) 中加入：
+---
 
-```ts
-   win.webContents.openDevTools({ mode: 'detach' })
-   ```
-
-2. **查看本地数据库**
-
-   任务数据存储在 Electron 的 `userData` 目录下：
-
-   * **Windows**: `%APPDATA%/桌面宠物任务助手/tasks.json`
-   * **macOS**: `\~/Library/Application Support/桌面宠物任务助手/tasks.json`
-   * **Linux**: `\~/.config/桌面宠物任务助手/tasks.json`
-
-   直接用编辑器打开即可查看 / 修改数据。
-
-3. **快速验证任务提醒**
-
-   在任务面板中添加一个「过期时间」为 1 分钟后的任务，等待 30 秒内即可看到提醒气泡 + 系统通知。
-
-### 验收测试清单
-
-开发完成后，按以下清单手动验收：
-
-* \[ ] 启动应用，宠物出现在屏幕右下角
-* \[ ] 左键单击宠物 → 任务面板展开
-* \[ ] 再次单击 → 任务面板收起
-* \[ ] 按住宠物拖拽 → 宠物跟随移动
-* \[ ] 右键宠物 → 显示上下文菜单
-* \[ ] 在任务面板添加任务 → 列表立即刷新
-* \[ ] 双击任务复选框 → 标记为已完成
-* \[ ] 删除任务 → 列表立即移除
-* \[ ] 添加带过期时间的任务 → 到点弹出系统通知 + 宠物跳跃
-* \[ ] 托盘图标右键 → 显示退出菜单
-* \[ ] `Ctrl+Shift+P` → 全局快捷键呼出宠物
-* \[ ] 设置页切换皮肤 → 宠物形象立即变化
-
-\---
-
-## 📦 打包发布
-
-### 生成 Windows 安装包
+## 打包发布
 
 ```bash
 npm run build:win
 ```
 
-打包完成后，`release/` 目录下会生成：
+产物位于 `release/` 目录：
 
 ```
-release/0.1.0/
-├── 桌面宠物任务助手 0.1.0.exe       # NSIS 在线安装包
-├── 桌面宠物任务助手 0.1.0 Setup.exe  # NSIS 完整安装包
-└── win-unpacked/                    # 解压版（免安装）
-    └── 桌面宠物任务助手.exe
+release/
+└── 0.1.6/
+    ├── PalGo 0.1.6.exe          # NSIS 安装包
+    └── win-unpacked/            # 免安装解压版
 ```
 
-> ⚠️ 首次打包需要下载 electron-builder 二进制（约 100MB），请耐心等待。
+> 首次打包需下载 electron-builder 二进制（约 100 MB）。
 
-### 自定义图标
+---
 
-替换以下文件即可自定义应用图标：
-
-|文件|用途|建议尺寸|
-|-|-|-|
-|`resources/icon.ico`|Windows 应用图标|256x256|
-|`resources/icon.icns`|macOS 应用图标|512x512|
-|`resources/tray-icon.png`|系统托盘图标|32x32|
-
-\---
-
-## 📐 设计文档
-
-详细的架构设计、模块划分、IPC 通道、数据模型请见：
-
-👉 [**docs/DESIGN.md**](docs/DESIGN.md)
-
-包含：
-
-* 系统架构图
-* 进程职责划分
-* IPC 通道设计表
-* 数据模型定义
-* 开发里程碑
-* 风险与待确认事项
-
-\---
-
-## 🗺️ 路线图
-
-* \[x] **M0** 项目搭建与文档
-* \[x] **M1** 宠物透明窗口 + 拖拽
-* \[x] **M2** 任务 CRUD + 面板 UI
-* \[x] **M3** 定时提醒 + 系统托盘
-* \[x] **M4** 设置面板 + Windows 打包
-* \[ ] **M5** 任务统计与周报
-* \[ ] **M6** 多皮肤扩展与动画系统（Lottie）
-* \[ ] **M7** 数据导出 / 导入
-
-\---
-
-## ❓ 常见问题
+## 常见问题
 
 <details>
-<summary><b>1. 为什么启动后宠物不显示？</b></summary>
+<summary><b>启动后宠物不显示？</b></summary>
 
-可能是显卡驱动对透明窗口支持不佳。在 [src/main/index.ts](src/main/index.ts) 中取消注释：
-
-```ts
-app.disableHardwareAcceleration()
-```
+可能是显卡驱动对透明窗口支持不佳，在 `src/main/index.ts` 中取消注释 `app.disableHardwareAcceleration()`。
 
 </details>
 
 <details>
-<summary><b>2. 任务数据存哪里？能云同步吗？</b></summary>
+<summary><b>B站动态拉取失败 / 一直转圈？</b></summary>
 
-数据存储在 `app.getPath('userData')/tasks.json`，是纯 JSON 文件。v1 不支持云同步，但你可以手动复制该文件到其他设备实现"伪同步"。
-
-</details>
-
-<details>
-<summary><b>3. macOS / Linux 能用吗？</b></summary>
-
-代码已做跨平台兼容，但当前主要针对 Windows 测试。macOS 下宠物会出现在 Dock 上方而非右下角，可在设置中后续优化。
+动态接口需要 WBI 签名（已内置自动处理）。若仍被风控拦截（页面上方有黄色警告条），在设置页「B站动态跟踪 → Cookie」中粘贴浏览器登录后的 Cookie 即可。
 
 </details>
 
 <details>
-<summary><b>4. 怎么让宠物开机自启？</b></summary>
+<summary><b>收不到系统通知？</b></summary>
 
-打开「设置」面板，开启「开机自启」开关即可。底层调用 `app.setLoginItemSettings`。
+检查 Windows 设置 → 系统 → 通知，确认全局通知开启且允许 PalGo 通知。
 
 </details>
 
-\---
+<details>
+<summary><b>数据存在哪里？能同步吗？</b></summary>
 
-## 🤝 贡献指南
+`%APPDATA%/PalGo/tasks.json` 纯 JSON 文件。暂不支持云同步，手动复制该文件即可迁移设备。
+
+</details>
+
+<details>
+<summary><b>macOS / Linux 能用吗？</b></summary>
+
+代码已做跨平台兼容（macOS 隐藏 Dock），但当前仅针对 Windows 测试。
+
+</details>
+
+---
+
+## 贡献指南
 
 1. Fork 本仓库
 2. 创建特性分支：`git checkout -b feature/your-feature`
-3. 提交更改：`git commit -m 'feat: add your feature'`
+3. 提交更改（遵循 [Conventional Commits](https://www.conventionalcommits.org/)）：
+
+| 前缀 | 用途 |
+|------|------|
+| `feat:` | 新功能 |
+| `fix:` | Bug 修复 |
+| `docs:` | 文档变更 |
+| `refactor:` | 重构 |
+| `chore:` | 构建 / 工具变更 |
+
 4. 推送分支：`git push origin feature/your-feature`
 5. 提交 Pull Request
 
-提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+---
 
-|前缀|用途|
-|-|-|
-|`feat:`|新功能|
-|`fix:`|Bug 修复|
-|`docs:`|文档变更|
-|`style:`|代码格式（不影响功能）|
-|`refactor:`|重构|
-|`test:`|测试|
-|`chore:`|构建/工具变更|
-
-\---
-
-## 📄 许可证
+## 许可证
 
 [MIT License](LICENSE)
 
-\---
+---
 
-## 🙏 致谢
+<div align="center">
 
-* [Electron](https://www.electronjs.org/) - 跨平台桌面应用框架
-* [React](https://react.dev/) - UI 库
-* [Vite](https://vitejs.dev/) - 下一代构建工具
-* [lowdb](https://github.com/typicode/lowdb) - 轻量 JSON 数据库
-* [electron-vite](https://electron-vite.org/) - Electron + Vite 集成方案
+Made with ❤️ by KPBL Team
 
-\---
+如果这个项目对你有帮助，欢迎 ⭐ Star 支持！
 
-<p align="center">
-  Made with ❤️ by KPBL Team<br>
-  如果这个项目对你有帮助，欢迎 ⭐ Star 支持！
-</p>
-
+</div>

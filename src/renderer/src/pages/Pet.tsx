@@ -88,7 +88,7 @@ export const PetPage: React.FC = () => {
           background: 'rgba(255,255,255,0.92)',
           border: '1px solid rgba(0,0,0,0.08)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          fontSize: 11,
+          fontSize: 'var(--text-xs)',
           color: 'var(--text-primary)',
           whiteSpace: 'nowrap',
           zIndex: 10,

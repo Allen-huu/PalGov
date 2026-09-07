@@ -1,12 +1,6 @@
 import React from 'react'
-import { useRouter } from '../router'
+import { PanelSidebar } from '../components/PanelSidebar'
 import { QuestionBankInfo, QuestionBank, Question, QuizRecord, QuizShortcutConfig, Settings } from '@shared/types'
-
-const TABS = [
-  { key: 'notes', path: '/task-panel', label: '笔记', icon: '📋' },
-  { key: 'quiz', path: '/quiz', label: '答题', icon: '✏️' },
-  { key: 'wrong', path: '/wrong-book', label: '错题', icon: '📖' },
-] as const
 
 const LS_KEY = 'quiz_state'
 
@@ -40,7 +34,6 @@ function isAnswerCorrect(question: Question, userAnswer: number | number[] | str
 }
 
 export const QuizPage: React.FC = () => {
-  const { navigate, path } = useRouter()
   const [banks, setBanks] = React.useState<QuestionBankInfo[]>([])
   const [loadingBanks, setLoadingBanks] = React.useState(true)
   const [bank, setBank] = React.useState<QuestionBank | null>(null)
@@ -315,14 +308,14 @@ export const QuizPage: React.FC = () => {
       }
 
       return (
-        <button key={i} onClick={handleClick} disabled={answered}
-          style={{ ...s.opt, background: bg, border, opacity }}>
-          <span style={isMulti ? s.optCheckbox : s.optIdx}>
+        <button key={i} className="quiz-option" onClick={handleClick} disabled={answered}
+          style={{ background: bg, border, opacity }}>
+          <span className={isMulti ? 'opt-check' : 'opt-idx'}>
             {isMulti ? (isUserSelected ? '☑' : '☐') : String.fromCharCode(65 + i)}
           </span>
-          <span style={s.optText}>{opt.replace(/^[A-D][.、]\s?/, '')}</span>
-          {answered && isCorrectAnswer && <span style={{ marginLeft: 'auto', fontSize: 12, flexShrink: 0 }}>✓</span>}
-          {isWrong && <span style={{ marginLeft: 'auto', fontSize: 12, flexShrink: 0 }}>✗</span>}
+          <span className="opt-text">{opt.replace(/^[A-D][.、]\s?/, '')}</span>
+          {answered && isCorrectAnswer && <span style={{ fontSize: 'var(--text-sm)', flexShrink: 0 }}>✓</span>}
+          {isWrong && <span style={{ fontSize: 'var(--text-sm)', flexShrink: 0 }}>✗</span>}
         </button>
       )
     })
@@ -332,37 +325,35 @@ export const QuizPage: React.FC = () => {
     const saved = showResume.saved
     const done = saved.records.filter((r) => r.correct).length
     return (
-      <main style={s.root}>
-        <Sidebar path={path} navigate={navigate} />
-        <div style={s.content}>
-          <div style={{ ...s.selectWrap, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-            <div style={{ fontSize: 28 }}>📝</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>发现未完成的答题记录</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center' }}>
-              已完成 {saved.records.length} 题，正确 {done} 题
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-              <button className="btn-ghost" style={{ fontSize: 12, padding: '6px 16px' }} onClick={() => startFresh(showResume.fileName)}>
-                重新开始
-              </button>
-              <button className="btn-primary" style={{ fontSize: 12, padding: '6px 16px' }} onClick={() => resumeQuiz(showResume.fileName, saved)}>
-                继续答题
-              </button>
-            </div>
+      <main className="panel-root">
+        <PanelSidebar />
+        <div style={{ ...s.selectWrap, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <div style={{ fontSize: 'var(--text-2xl)' }}>📝</div>
+          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--text-primary)' }}>发现未完成的答题记录</div>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            已完成 {saved.records.length} 题，正确 {done} 题
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+            <button className="btn-ghost" onClick={() => startFresh(showResume.fileName)}>
+              重新开始
+            </button>
+            <button className="btn-primary" onClick={() => resumeQuiz(showResume.fileName, saved)}>
+              继续答题
+            </button>
           </div>
         </div>
       </main>
     )
   }
 
-  return <main style={s.root}>
-    <Sidebar path={path} navigate={navigate} />
+  return <main className="panel-root">
+    <PanelSidebar />
     <div style={s.content}>
       {!bank ? (
         <div style={s.selectWrap}>
-          <div style={s.title}>选择题库</div>
+          <div className="section-title" style={{ fontSize: 'var(--text-md)', textTransform: 'none', letterSpacing: '-0.01em', color: 'var(--text-primary)', marginBottom: 5 }}>选择题库</div>
           {loadingBanks ? <div style={s.centered}>加载中...</div> :
-           banks.length === 0 ? <div style={s.centered}><div style={{ fontSize: 22, marginBottom: 3 }}>📂</div><div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>暂无题库</div><div style={{ fontSize: 9, color: 'var(--text-tertiary)', marginTop: 2 }}>将 JSON 题库放入 question-banks 目录</div></div> :
+           banks.length === 0 ? <div style={s.centered}><div style={{ fontSize: 'var(--text-2xl)', marginBottom: 3 }}>📂</div><div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>暂无题库</div><div style={{ fontSize: 'var(--text-2xs)', color: 'var(--text-tertiary)', marginTop: 2 }}>将 JSON 题库放入 question-banks 目录</div></div> :
            (banks.map((b) => {
              const progress = allProgress[b.fileName]
              const hasProgress = progress && progress.records.length > 0
@@ -373,7 +364,7 @@ export const QuizPage: React.FC = () => {
                 <div style={s.bankName}>{b.name}</div>
                 <div style={s.bankDesc}>{b.description}</div>
                 {hasProgress && (
-                  <div style={{ fontSize: 10, color: 'var(--accent)', marginTop: 2, fontWeight: 500 }}>
+                  <div style={{ fontSize: 'var(--text-2xs)', color: 'var(--accent)', marginTop: 2, fontWeight: 500 }}>
                     进度 {progress.records.length}/{b.questionCount} · 正确 {doneCount}
                   </div>
                 )}
@@ -384,29 +375,29 @@ export const QuizPage: React.FC = () => {
         </div>
       ) : finished ? (
         <div style={s.resultWrap}>
-          <div style={{ fontSize: 24, marginBottom: 2 }}>🎉</div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>答题完成</div>
-          <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>正确 {correctCount} / {totalCount} 题</div>
+          <div style={{ fontSize: 'var(--text-2xl)', marginBottom: 2 }}>🎉</div>
+          <div style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>答题完成</div>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>正确 {correctCount} / {totalCount} 题</div>
           <div style={{ marginTop: 8, display: 'flex', gap: 5 }}>
-            <button className="btn-ghost" style={{ fontSize: 10 }} onClick={backToBanks}>返回题库</button>
-            <button className="btn-primary" style={{ fontSize: 10 }} onClick={() => startFresh(bankFileName)}>再来一次</button>
+            <button className="btn-ghost btn-sm" onClick={backToBanks}>返回题库</button>
+            <button className="btn-primary btn-sm" onClick={() => startFresh(bankFileName)}>再来一次</button>
           </div>
         </div>
       ) : question ? (
         <div style={s.quizWrap}>
           {/* 顶栏 */}
           <div style={s.topBar}>
-            <button onClick={backToBanks} className="btn-ghost" style={{ fontSize: 9, padding: '2px 6px' }}>← 题库</button>
-            <span style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>{qIndex + 1}/{totalCount}</span>
-            <span style={{ fontSize: 9, color: 'var(--accent)' }}>✓{correctCount}</span>
+            <button onClick={backToBanks} className="btn-ghost btn-sm" style={{ padding: '2px 8px' }}>← 题库</button>
+            <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--text-tertiary)' }}>{qIndex + 1}/{totalCount}</span>
+            <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--accent)' }}>✓{correctCount}</span>
           </div>
           {/* 题目 */}
           <div style={s.questionText}>{question.question}</div>
           {/* 选项 */}
-          <div style={s.optionsGrid}>{renderOptions()}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{renderOptions()}</div>
           {/* 多选确认按钮 */}
           {isMulti && !answered && Array.isArray(selected) && selected.length > 0 && (
-            <button className="btn-primary" onClick={handleConfirmMulti} style={{ marginTop: 6, fontSize: 12, padding: '5px 0', width: '100%', textAlign: 'center' }}>
+            <button className="btn-primary" onClick={handleConfirmMulti} style={{ marginTop: 6, padding: '5px 0', width: '100%', textAlign: 'center' }}>
               确认选择 ({selected.length} 项)
             </button>
           )}
@@ -414,27 +405,27 @@ export const QuizPage: React.FC = () => {
           {answered && (
             <div style={s.feedback}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: selected !== null && isAnswerCorrect(question, selected) ? 'var(--success)' : 'var(--danger)', whiteSpace: 'nowrap' as const }}>
+                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: selected !== null && isAnswerCorrect(question, selected) ? 'var(--success)' : 'var(--danger)', whiteSpace: 'nowrap' as const }}>
                   {selected !== null && isAnswerCorrect(question, selected) ? '✓ 正确' : '✗ 错误'}
                 </span>
-                <span style={{ fontSize: 11, color: 'var(--text-tertiary)', flex: 1, lineHeight: 1.4 }}>{question.explanation}</span>
+                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)', flex: 1, lineHeight: 1.4 }}>{question.explanation}</span>
                 {!aiExplanation && (
-                  <button onClick={handleAiExplain} disabled={aiLoading} className="btn-ghost" style={{ fontSize: 11, padding: '3px 8px', whiteSpace: 'nowrap' as const }}>
+                  <button onClick={handleAiExplain} disabled={aiLoading} className="btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' as const }}>
                     {aiLoading ? '...' : 'AI解析'}
                   </button>
                 )}
               </div>
               {aiExplanation && (
-                <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, padding: '4px 6px', background: 'rgba(255,159,10,0.06)', borderRadius: 5 }}>
+                <div style={{ marginTop: 4, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', lineHeight: 1.5, padding: '4px 6px', background: 'var(--accent-bg)', borderRadius: 'var(--radius-sm)' }}>
                   {aiExplanation}
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                <button onClick={handlePrev} disabled={qIndex === 0} className="btn-ghost" style={{ fontSize: 11, padding: '3px 10px', opacity: qIndex === 0 ? 0.3 : 1 }}>上一题</button>
-                <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                <button onClick={handlePrev} disabled={qIndex === 0} className="btn-ghost btn-sm" style={{ opacity: qIndex === 0 ? 0.3 : 1 }}>上一题</button>
+                <span style={{ fontSize: 'var(--text-2xs)', color: 'var(--text-tertiary)' }}>
                   {isMulti ? 'Space 确认 · Enter/→ 下一题 · ← 上一题' : 'A-D 选择 · Enter/→ 下一题 · ← 上一题'}
                 </span>
-                <button onClick={handleNext} className="btn-primary" style={{ fontSize: 11, padding: '3px 10px' }}>
+                <button onClick={handleNext} className="btn-primary btn-sm">
                   {qIndex + 1 < totalCount ? '下一题' : '查看结果'}
                 </button>
               </div>
@@ -446,51 +437,18 @@ export const QuizPage: React.FC = () => {
   </main>
 }
 
-function Sidebar({ path, navigate }: { path: string; navigate: (to: string) => void }) {
-  const active = path === '/quiz' ? 'quiz' : path === '/wrong-book' ? 'wrong' : 'notes'
-  return (
-    <div style={sidebarStyle}>
-      {TABS.map((tab) => (
-        <button key={tab.key} onClick={() => navigate(tab.path)} style={{
-          ...sidebarItem,
-          background: active === tab.key ? 'var(--accent-bg)' : 'transparent',
-          color: active === tab.key ? 'var(--accent)' : 'var(--text-tertiary)',
-          fontWeight: active === tab.key ? 600 : 400,
-        }} title={tab.label}>
-          <span style={{ fontSize: 16 }}>{tab.icon}</span>
-          <span style={{ fontSize: 10, marginTop: 2 }}>{tab.label}</span>
-        </button>
-      ))}
-    </div>
-  )
-}
-
-const sidebarStyle: React.CSSProperties = { width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2, padding: '8px 4px', borderRight: '1px solid var(--panel-border)', background: 'rgba(0,0,0,0.02)' }
-const sidebarItem: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, padding: '8px 4px', borderRadius: 10, border: 'none', cursor: 'pointer', transition: 'all 0.15s ease' }
-
 const s: Record<string, React.CSSProperties> = {
-  root: { width: '100%', height: '100%', display: 'flex', background: 'var(--panel-bg)', backdropFilter: 'var(--glass-blur)', WebkitBackdropFilter: 'var(--glass-blur)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--panel-border)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' },
   content: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', minWidth: 0 },
   selectWrap: { flex: 1, overflowY: 'auto', padding: '6px 8px' },
-  title: { fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 5 },
-  centered: { textAlign: 'center' as const, color: 'var(--text-secondary)', padding: 16, fontSize: 11 },
-  bankItem: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 8px', marginBottom: 2, borderRadius: 'var(--radius-sm)', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', cursor: 'pointer', textAlign: 'left' as const, width: '100%' },
-  bankName: { fontSize: 11, fontWeight: 600, color: 'var(--text-primary)' },
-  bankDesc: { fontSize: 9, color: 'var(--text-tertiary)', marginTop: 1, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
-  bankCount: { fontSize: 9, color: 'var(--accent)', fontWeight: 600, whiteSpace: 'nowrap' as const },
+  centered: { textAlign: 'center' as const, color: 'var(--text-secondary)', padding: 16, fontSize: 'var(--text-sm)' },
+  bankItem: { display: 'flex', alignItems: 'center', gap: 5, padding: '8px 10px', marginBottom: 4, borderRadius: 'var(--radius-md)', background: 'var(--surface)', border: '1px solid var(--hairline)', cursor: 'pointer', textAlign: 'left' as const, width: '100%' },
+  bankName: { fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-primary)' },
+  bankDesc: { fontSize: 'var(--text-2xs)', color: 'var(--text-tertiary)', marginTop: 1, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' },
+  bankCount: { fontSize: 'var(--text-2xs)', color: 'var(--accent)', fontWeight: 600, whiteSpace: 'nowrap' as const },
   // 答题
   quizWrap: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '6px 10px', overflowY: 'auto' },
   topBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2, minHeight: 20 },
-  questionText: { fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.35, marginBottom: 4 },
-  optionsGrid: { display: 'flex', flexDirection: 'column', gap: 2 },
-  opt: {
-    display: 'flex', alignItems: 'center', gap: 5, padding: '4px 7px',
-    borderRadius: 5, cursor: 'pointer', transition: 'all 0.1s ease',
-    textAlign: 'left' as const, width: '100%',
-  },
-  optIdx: { width: 16, height: 16, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, background: 'rgba(0,0,0,0.06)', color: 'var(--text-secondary)', flexShrink: 0 },
-  optCheckbox: { width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 },
-  optText: { fontSize: 10, lineHeight: 1.3, textAlign: 'left' as const },
-  feedback: { marginTop: 4, padding: '4px 6px', background: 'rgba(0,0,0,0.02)', borderRadius: 5 },
+  questionText: { fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: 4 },
+  feedback: { marginTop: 4, padding: '6px 8px', background: 'var(--surface)', border: '1px solid var(--hairline)', borderRadius: 'var(--radius-md)' },
   resultWrap: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 12 },
 }

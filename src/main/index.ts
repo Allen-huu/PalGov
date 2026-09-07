@@ -10,6 +10,7 @@ import { registerSettingsIpc } from './ipc/settingsIpc'
 import { registerWindowIpc } from './ipc/windowIpc'
 import { registerAIIpc } from './ipc/aiIpc'
 import { registerQuizIpc } from './ipc/quizIpc'
+import { registerBilibiliIpc } from './ipc/bilibiliIpc'
 import { bindPetWindow, startNotifyService, stopNotifyService } from './services/notifyService'
 import { createTray, destroyTray } from './services/trayService'
 import { getSettings } from './services/storeService'
@@ -17,6 +18,7 @@ import { showSettingsWindow } from './windows/settingsWindow'
 import { registerShortcuts, unregisterAllShortcuts } from './services/shortcutService'
 import { startDrinkReminder, stopDrinkReminder } from './services/drinkReminderService'
 import { startStandReminder, stopStandReminder } from './services/standReminderService'
+import { startBiliPolling, stopBiliPolling } from './services/bilibiliService'
 
 // 禁用硬件加速在某些显卡下能让透明窗口更稳定（按需）
 // app.disableHardwareAcceleration()
@@ -32,6 +34,9 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(async () => {
+  // Windows 系统通知依赖 AppUserModelId，不设置会静默失败
+  app.setAppUserModelId('com.palgo.desktop')
+
   // 应用设置：开机自启
   const settings = await getSettings()
   app.setLoginItemSettings({
@@ -44,6 +49,7 @@ app.whenReady().then(async () => {
   registerWindowIpc()
   registerAIIpc()
   registerQuizIpc()
+  registerBilibiliIpc()
 
   // 创建窗口
   const pet = createPetWindow()
@@ -73,6 +79,9 @@ app.whenReady().then(async () => {
   // 启动站立提醒
   startStandReminder()
 
+  // 启动B站动态轮询
+  startBiliPolling()
+
   // 根据设置注册全局快捷键
   registerShortcuts()
 
@@ -100,6 +109,7 @@ app.on('before-quit', async () => {
   stopNotifyService()
   stopDrinkReminder()
   stopStandReminder()
+  stopBiliPolling()
   destroyTray()
   unregisterAllShortcuts()
 })

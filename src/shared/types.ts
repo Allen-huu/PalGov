@@ -61,6 +61,14 @@ export interface Settings {
   drinkReminderMinutes: number
   /** 站立提醒间隔（分钟），0 表示关闭 */
   standReminderMinutes: number
+  /** B站动态跟踪开关 */
+  biliEnabled: boolean
+  /** B站动态轮询间隔（秒），最小 15 */
+  biliIntervalSec: number
+  /** B站新动态系统通知开关 */
+  biliNotify: boolean
+  /** B站请求 Cookie（可选，用于绕过风控，格式如 "SESSDATA=xxx; buvid3=xxx"） */
+  biliCookie?: string
 }
 
 /** 快捷键配置 */
@@ -131,7 +139,11 @@ export const DEFAULT_SETTINGS: Settings = {
     prevQuestion: 'ArrowLeft'
   },
   drinkReminderMinutes: 30,
-  standReminderMinutes: 60
+  standReminderMinutes: 60,
+  biliEnabled: true,
+  biliIntervalSec: 30,
+  biliNotify: true,
+  biliCookie: ''
 }
 
 /** 通知 payload（主进程 → 渲染进程） */
@@ -214,4 +226,49 @@ export interface WrongQuestion {
   nextReviewAt: number
   createdAt: number
   updatedAt: number
+}
+
+/** ====== B站动态跟踪 ====== */
+
+/** 已关注的 B 站 UP 主 */
+export interface BiliUp {
+  /** UP 主 UID */
+  mid: number
+  /** 昵称 */
+  name: string
+  /** 头像 URL */
+  avatar?: string
+  /** 已记录的最新动态 ID（id_str，用于增量判断） */
+  lastDynamicId?: string
+  addedAt: number
+}
+
+/** 一条 B 站动态（摘要形式） */
+export interface BiliDynamic {
+  /** 动态 ID */
+  id: string
+  /** UP 主 UID */
+  mid: number
+  /** UP 主昵称 */
+  upName: string
+  /** 头像 URL */
+  upAvatar?: string
+  /** 原始动态类型（DYNAMIC_TYPE_AV 等） */
+  type: string
+  /** 摘要文本 */
+  text: string
+  /** 动态页链接 */
+  url: string
+  /** 发布时间戳（秒） */
+  pubTs: number
+  /** 抓取时间戳（毫秒） */
+  fetchedAt: number
+}
+
+/** 添加 UP 主的结果 */
+export interface BiliAddResult {
+  ok: boolean
+  /** 失败原因或成功提示 */
+  message: string
+  up?: BiliUp
 }

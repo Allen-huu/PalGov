@@ -16,26 +16,26 @@ export const TaskItem: React.FC<Props> = ({ task, onToggle, onDelete }) => {
 
   return (
     <div
+    className="task-row"
     style={{
       display: 'flex',
       alignItems: 'flex-start',
       gap: 6,
-      padding: '6px 8px',
-      borderRadius: 'var(--radius-md)',
-      background: hover ? 'rgba(0,0,0,0.02)' : 'transparent',
-      marginBottom: 1,
+      padding: '8px 10px',
+      background: hover ? 'rgba(118, 118, 128, 0.06)' : 'transparent',
+      borderBottom: '1px solid var(--hairline)',
       transition: 'background 0.15s ease',
       animation: 'fadeIn 0.2s ease',
     }}
-      onMouseEnter={() => setHover(true)}
+    onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      {/* 自定义圆形 checkbox */}
+      {/* 自定义圆形 checkbox（iOS 提醒事项样式） */}
       <button
         onClick={onToggle}
         style={{
           width: 20, height: 20, borderRadius: '50%',
-          border: task.done ? 'none' : '2px solid rgba(0,0,0,0.18)',
+          border: task.done ? 'none' : '1.5px solid rgba(60, 60, 67, 0.3)',
           background: task.done ? 'var(--success)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, marginTop: 2,
@@ -51,7 +51,7 @@ export const TaskItem: React.FC<Props> = ({ task, onToggle, onDelete }) => {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 13, fontWeight: 500,
+          fontSize: 'var(--text-md)', fontWeight: 500,
           textDecoration: task.done ? 'line-through' : 'none',
           color: task.done ? 'var(--text-tertiary)' : 'var(--text-primary)',
           wordBreak: 'break-word', lineHeight: 1.45,
@@ -59,12 +59,12 @@ export const TaskItem: React.FC<Props> = ({ task, onToggle, onDelete }) => {
           {task.title}
         </div>
         {task.note && (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)', marginTop: 4, lineHeight: 1.45 }}>
             {task.note}
           </div>
         )}
         {task.dueAt && (
-          <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--accent)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>{formatTime(task.dueAt)}</span>
           </div>
         )}
@@ -76,7 +76,7 @@ export const TaskItem: React.FC<Props> = ({ task, onToggle, onDelete }) => {
           title="删除"
           style={{
             background: 'transparent', color: 'var(--text-tertiary)',
-            fontSize: 15, padding: '0 2px', flexShrink: 0, marginTop: 1,
+            fontSize: 'var(--text-lg)', padding: '0 2px', flexShrink: 0, marginTop: 1,
             borderRadius: 4, width: 22, height: 22,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}

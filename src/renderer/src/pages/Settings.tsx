@@ -1,5 +1,5 @@
 import React from 'react'
-import { Settings, ShortcutConfig, QuizShortcutConfig } from '@shared/types'
+import { Settings, ShortcutConfig, QuizShortcutConfig, BiliUp } from '@shared/types'
 
 export const SettingsPage: React.FC = () => {
   const [settings, setSettings] = React.useState<Settings | null>(null)
@@ -11,8 +11,19 @@ export const SettingsPage: React.FC = () => {
   const [recording, setRecording] = React.useState<keyof ShortcutConfig | null>(null)
   /** 答题快捷键录制状态 */
   const [quizRecording, setQuizRecording] = React.useState<keyof QuizShortcutConfig | null>(null)
+  /** B站：关注输入、反馈、UP主列表、Cookie */
+  const [biliInput, setBiliInput] = React.useState('')
+  const [biliAdding, setBiliAdding] = React.useState(false)
+  const [biliMsg, setBiliMsg] = React.useState('')
+  const [biliUps, setBiliUps] = React.useState<BiliUp[]>([])
+  const [biliCookie, setBiliCookie] = React.useState('')
 
-  React.useEffect(() => { window.pet.settings.get().then((s: Settings) => { setSettings(s); setKey(s.aiApiKey ?? '') }) }, [])
+  React.useEffect(() => { window.pet.settings.get().then((s: Settings) => { setSettings(s); setKey(s.aiApiKey ?? ''); setBiliCookie(s.biliCookie ?? '') }) }, [])
+
+  const refreshBiliUps = React.useCallback(() => {
+    void window.pet.bili.listUps().then(setBiliUps)
+  }, [])
+  React.useEffect(() => { refreshBiliUps() }, [refreshBiliUps])
 
   const update = async (patch: Partial<Settings>) => {
     const next = await window.pet.settings.set(patch)
@@ -22,6 +33,38 @@ export const SettingsPage: React.FC = () => {
   }
 
   const saveKey = async () => { const next = await window.pet.ai.setKey(key); setSettings(next); setMessage('API Key 已保存') }
+
+  /** 添加 B 站 UP 主 */
+  const handleAddBiliUp = async () => {
+    if (!biliInput.trim() || biliAdding) return
+    setBiliAdding(true)
+    setBiliMsg('正在添加…')
+    try {
+      const result = await window.pet.bili.addUp(biliInput.trim())
+      setBiliMsg(result.message)
+      if (result.ok) {
+        setBiliInput('')
+        refreshBiliUps()
+      }
+    } catch {
+      setBiliMsg('添加失败，请重试')
+    }
+    setBiliAdding(false)
+  }
+
+  /** 移除 B 站 UP 主 */
+  const handleRemoveBiliUp = async (mid: number) => {
+    await window.pet.bili.removeUp(mid)
+    refreshBiliUps()
+  }
+
+  /** 保存 B 站 Cookie */
+  const saveBiliCookie = async () => {
+    const next = await window.pet.settings.set({ biliCookie: biliCookie.trim() })
+    setSettings(next)
+    setMessage('B站 Cookie 已保存')
+    window.setTimeout(() => setMessage(''), 1500)
+  }
   const test = async () => {
     setTesting(true)
     setMessage('正在测试连接…')
@@ -98,7 +141,7 @@ export const SettingsPage: React.FC = () => {
     <Section title="宠物显示">
       <Info text="当前角色" value="水豚噜噜" />
       <Row label={settings.petVisible ? '宠物已显示' : '宠物已隐藏'}>
-        <button className="btn-primary" style={{ fontSize: 13, padding: '7px 14px' }}
+        <button className="btn-primary"
           onClick={() => { if (settings.petVisible) { window.pet.window.hidePet() } else { window.pet.window.showPet() }; update({ petVisible: !settings.petVisible }) }}>
           {settings.petVisible ? '隐藏宠物' : '显示宠物'}
         </button>
@@ -197,8 +240,8 @@ export const SettingsPage: React.FC = () => {
       <Field label="API Key">
         <div style={s.inline}>
           <input className="input-apple" type={showKey ? 'text' : 'password'} value={key} onChange={(e) => setKey(e.target.value)} placeholder="输入 API Key" style={{ flex: 1, minWidth: 0 }} />
-          <button className="btn-ghost" style={{ fontSize: 12, padding: '7px 12px' }} onClick={() => setShowKey(!showKey)}>{showKey ? '隐藏' : '显示'}</button>
-          <button className="btn-primary" style={{ fontSize: 12, padding: '7px 14px' }} onClick={saveKey}>保存</button>
+          <button className="btn-ghost" onClick={() => setShowKey(!showKey)}>{showKey ? '隐藏' : '显示'}</button>
+          <button className="btn-primary" onClick={saveKey}>保存</button>
         </div>
       </Field>
       <Field label={`温度 ${settings.aiTemperature.toFixed(1)}`}>
@@ -215,7 +258,7 @@ export const SettingsPage: React.FC = () => {
       </Field>
       <Row label="发送任务上下文给 AI"><Toggle checked={settings.aiSendTaskContext} onChange={(v) => update({ aiSendTaskContext: v })} /></Row>
       <div style={s.inline}>
-        <button className="btn-primary" style={{ fontSize: 13 }} disabled={testing} onClick={test}>{testing ? '测试中…' : '测试连接'}</button>
+        <button className="btn-primary" disabled={testing} onClick={test}>{testing ? '测试中…' : '测试连接'}</button>
         <span style={s.hint}>{settings.aiApiKey ? '已配置 API Key' : '尚未配置 API Key'}</span>
       </div>
       <p style={s.help}>API Key 仅保存在本机。Base URL 必须是 OpenAI Chat Completions 兼容接口的根地址。</p>
@@ -231,7 +274,7 @@ export const SettingsPage: React.FC = () => {
           <input type="range" min="0" max="120" step="5" value={settings.drinkReminderMinutes}
             onChange={(e) => update({ drinkReminderMinutes: Number(e.target.value) })}
             style={{ flex: 1, accentColor: 'var(--accent)' }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', minWidth: 40, textAlign: 'right' }}>
+          <span style={s.sliderValue}>
             {settings.drinkReminderMinutes === 0 ? '关闭' : `${settings.drinkReminderMinutes} 分钟`}
           </span>
         </div>
@@ -244,27 +287,80 @@ export const SettingsPage: React.FC = () => {
           <input type="range" min="0" max="120" step="5" value={settings.standReminderMinutes}
             onChange={(e) => update({ standReminderMinutes: Number(e.target.value) })}
             style={{ flex: 1, accentColor: 'var(--accent)' }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', minWidth: 40, textAlign: 'right' }}>
+          <span style={s.sliderValue}>
             {settings.standReminderMinutes === 0 ? '关闭' : `${settings.standReminderMinutes} 分钟`}
           </span>
         </div>
+      </Field>
+    </Section>
+
+    <Section title="B站动态跟踪">
+      <Row label="启用动态跟踪"><Toggle checked={settings.biliEnabled} onChange={(v) => update({ biliEnabled: v })} /></Row>
+      <Row label="新动态系统通知"><Toggle checked={settings.biliNotify} onChange={(v) => update({ biliNotify: v })} /></Row>
+      <Field label={`轮询间隔 ${settings.biliIntervalSec} 秒`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="range" min="15" max="300" step="5" value={settings.biliIntervalSec}
+            onChange={(e) => update({ biliIntervalSec: Number(e.target.value) })}
+            style={{ flex: 1, accentColor: 'var(--accent)' }} />
+          <span style={s.sliderValue}>
+            {settings.biliIntervalSec} 秒
+          </span>
+        </div>
+      </Field>
+      <Field label="添加 UP 主（B站空间链接或 UID）">
+        <div style={s.inline}>
+          <input className="input-apple" value={biliInput}
+            onChange={(e) => setBiliInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddBiliUp()}
+            placeholder="https://space.bilibili.com/xxx"
+            style={{ flex: 1, minWidth: 0 }} />
+          <button className="btn-primary" disabled={biliAdding || !biliInput.trim()} onClick={handleAddBiliUp}>
+            {biliAdding ? '添加中…' : '关注'}
+          </button>
+        </div>
+        {biliMsg && <p style={s.help}>{biliMsg}</p>}
+      </Field>
+      {biliUps.length > 0 && (
+        <Field label={`已关注 ${biliUps.length} 位 UP 主（「动态」页展示最近 3 天动态，更新时推送系统通知）`}>
+          {biliUps.map((up) => (
+            <div key={up.mid} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 10px', background: 'rgba(118,118,128,0.06)', borderRadius: 'var(--radius-sm)' }}>
+              <span style={{ fontSize: 'var(--text-md)' }}>
+                {up.avatar && <img src={up.avatar} alt="" style={{ width: 20, height: 20, borderRadius: '50%', marginRight: 6, verticalAlign: 'middle', objectFit: 'cover' }} />}
+                {up.name}
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginLeft: 6 }}>UID {up.mid}</span>
+              </span>
+              <button className="btn-ghost btn-sm" onClick={() => handleRemoveBiliUp(up.mid)}>移除</button>
+            </div>
+          ))}
+        </Field>
+      )}
+      <Field label="Cookie（可选）">
+        <div style={s.inline}>
+          <input className="input-apple" type="text" value={biliCookie}
+            onChange={(e) => setBiliCookie(e.target.value)}
+            placeholder="SESSDATA=xxx; buvid3=xxx"
+            style={{ flex: 1, minWidth: 0 }} />
+          <button className="btn-primary" onClick={saveBiliCookie}>保存</button>
+        </div>
+        <p style={s.help}>请求被B站风控拦截时，从浏览器登录B站后复制 Cookie 填入此处。仅保存在本机。</p>
       </Field>
     </Section>
   </main>
 }
 
 const s: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100%', padding: '28px 32px 44px', background: '#f5f2eb', color: 'var(--text-primary)' },
+  page: { minHeight: '100%', padding: '28px 32px 44px', background: '#f2f2f7', color: 'var(--text-primary)' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 },
-  title: { fontSize: 28, fontWeight: 700, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' },
-  subtitle: { color: 'var(--text-secondary)', marginTop: 4, fontSize: 14 },
-  status: { color: 'var(--success)', fontSize: 12, fontWeight: 500 },
+  title: { fontSize: 'var(--text-2xl)', fontWeight: 700, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' },
+  subtitle: { color: 'var(--text-secondary)', marginTop: 4, fontSize: 'var(--text-md)' },
+  status: { color: 'var(--success)', fontSize: 'var(--text-xs)', fontWeight: 500 },
   inline: { display: 'flex', gap: 8, alignItems: 'center', width: '100%' },
-  hint: { color: 'var(--text-tertiary)', fontSize: 12 },
-  help: { color: 'var(--text-tertiary)', fontSize: 12, lineHeight: 1.6, marginTop: 4 },
+  hint: { color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' },
+  help: { color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)', lineHeight: 1.6, marginTop: 4 },
+  sliderValue: { fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--text-primary)', minWidth: 40, textAlign: 'right' },
   kbd: {
     display: 'inline-block', padding: '3px 8px',
-    fontSize: 11, fontWeight: 600, fontFamily: 'inherit',
+    fontSize: 'var(--text-xs)', fontWeight: 600, fontFamily: 'inherit',
     color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.04)',
     borderRadius: 5, border: '1px solid rgba(0,0,0,0.08)',
     letterSpacing: '0.02em',
@@ -273,10 +369,10 @@ const s: Record<string, React.CSSProperties> = {
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section style={{ marginBottom: 24 }}>
-    <h2 style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10, paddingLeft: 2 }}>{title}</h2>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
+    <h2 style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-xs)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10, paddingLeft: 2 }}>{title}</h2>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1, borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--surface)', border: '1px solid var(--hairline)' }}>
       {React.Children.map(children, (child, i) => (
-        <div style={{ borderBottom: i < React.Children.count(children) - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+        <div style={{ borderBottom: i < React.Children.count(children) - 1 ? '1px solid var(--hairline)' : 'none' }}>
           {child}
         </div>
       ))}
@@ -286,21 +382,21 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 
 const Row: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-    <span style={{ fontSize: 14 }}>{label}</span>{children}
+    <span style={{ fontSize: 'var(--text-md)' }}>{label}</span>{children}
   </div>
 )
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div style={{ display: 'flex', flexDirection: 'column', padding: '12px 16px', gap: 7 }}>
-    <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }}>{label}</span>
+    <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-xs)', fontWeight: 500 }}>{label}</span>
     {children}
   </div>
 )
 
 const Info: React.FC<{ text: string; value: string }> = ({ text, value }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-    <span style={{ fontSize: 14 }}>{text}</span>
-    <strong style={{ fontSize: 14, color: 'var(--accent)' }}>{value}</strong>
+    <span style={{ fontSize: 'var(--text-md)' }}>{text}</span>
+    <strong style={{ fontSize: 'var(--text-md)', color: 'var(--accent)' }}>{value}</strong>
   </div>
 )
 
@@ -319,17 +415,17 @@ const ShortcutRow: React.FC<{
   onCancel: () => void
 }> = ({ label, value, recording, onRecord, onCancel }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-    <span style={{ fontSize: 14 }}>{label}</span>
+    <span style={{ fontSize: 'var(--text-md)' }}>{label}</span>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       {recording ? (
         <>
           <kbd style={s.kbd} className="recording">按下组合键…</kbd>
-          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={onCancel}>取消</button>
+          <button className="btn-ghost btn-sm" onClick={onCancel}>取消</button>
         </>
       ) : (
         <>
           <kbd style={s.kbd}>{formatShortcut(value)}</kbd>
-          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={onRecord}>修改</button>
+          <button className="btn-ghost btn-sm" onClick={onRecord}>修改</button>
         </>
       )}
     </div>
@@ -354,17 +450,17 @@ const QuizShortcutRow: React.FC<{
   onCancel: () => void
 }> = ({ label, value, recording, onRecord, onCancel }) => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-    <span style={{ fontSize: 14 }}>{label}</span>
+    <span style={{ fontSize: 'var(--text-md)' }}>{label}</span>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       {recording ? (
         <>
           <kbd style={s.kbd} className="recording">按下按键…</kbd>
-          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={onCancel}>取消</button>
+          <button className="btn-ghost btn-sm" onClick={onCancel}>取消</button>
         </>
       ) : (
         <>
           <kbd style={s.kbd}>{formatQuizKey(value)}</kbd>
-          <button className="btn-ghost" style={{ fontSize: 11, padding: '5px 10px' }} onClick={onRecord}>修改</button>
+          <button className="btn-ghost btn-sm" onClick={onRecord}>修改</button>
         </>
       )}
     </div>

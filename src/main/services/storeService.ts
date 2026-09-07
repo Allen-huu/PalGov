@@ -5,20 +5,24 @@ import { app } from 'electron'
 import { join } from 'node:path'
 import { JSONFilePreset } from 'lowdb/node'
 import { DB_FILE_NAME } from '../config/constants'
-import { DEFAULT_SETTINGS, Settings, Task, WrongQuestion } from '@shared/types'
+import { DEFAULT_SETTINGS, Settings, Task, WrongQuestion, BiliUp, BiliDynamic } from '@shared/types'
 
 /** 数据库结构 */
 export interface DbSchema {
   tasks: Task[]
   settings: Settings
   wrongQuestions: WrongQuestion[]
+  biliUps: BiliUp[]
+  biliDynamics: BiliDynamic[]
 }
 
 /** 默认数据 */
 const defaultData: DbSchema = {
   tasks: [],
   settings: { ...DEFAULT_SETTINGS },
-  wrongQuestions: []
+  wrongQuestions: [],
+  biliUps: [],
+  biliDynamics: []
 }
 
 let dbPromise: ReturnType<typeof JSONFilePreset<DbSchema>> | null = null
@@ -39,6 +43,12 @@ async function getDb() {
     }
     if (!Array.isArray(instance.data.wrongQuestions)) {
       instance.data.wrongQuestions = []
+    }
+    if (!Array.isArray(instance.data.biliUps)) {
+      instance.data.biliUps = []
+    }
+    if (!Array.isArray(instance.data.biliDynamics)) {
+      instance.data.biliDynamics = []
     }
     await instance.write()
     dbPromise = Promise.resolve(instance)
@@ -122,4 +132,52 @@ export async function removeWrongQuestion(id: string): Promise<boolean> {
   db.data.wrongQuestions = db.data.wrongQuestions.filter((item) => item.id !== id)
   await db.write()
   return db.data.wrongQuestions.length !== before
+}
+
+/** ====== B站动态跟踪 ====== */
+
+export async function getBiliUps(): Promise<BiliUp[]> {
+  const db = await getDb()
+  return [...db.data.biliUps]
+}
+
+export async function saveBiliUp(up: BiliUp): Promise<BiliUp> {
+  const db = await getDb()
+  const index = db.data.biliUps.findIndex((item) => item.mid === up.mid)
+  if (index >= 0) db.data.biliUps[index] = up
+  else db.data.biliUps.push(up)
+  await db.write()
+  return up
+}
+
+export async function removeBiliUp(mid: number): Promise<boolean> {
+  const db = await getDb()
+  const before = db.data.biliUps.length
+  db.data.biliUps = db.data.biliUps.filter((item) => item.mid !== mid)
+  db.data.biliDynamics = db.data.biliDynamics.filter((item) => item.mid !== mid)
+  await db.write()
+  return db.data.biliUps.length !== before
+}
+
+export async function getBiliDynamics(): Promise<BiliDynamic[]> {
+  const db = await getDb()
+  return [...db.data.biliDynamics]
+}
+
+export async function saveBiliDynamics(list: BiliDynamic[]): Promise<void> {
+  const db = await getDb()
+  db.data.biliDynamics = list
+  await db.write()
+}
+
+/** 合并新动态到存储（按 id 去重、按发布时间倒序、最多保留 200 条） */
+export async function mergeBiliDynamics(fresh: BiliDynamic[]): Promise<BiliDynamic[]> {
+  const db = await getDb()
+  const merged = [...fresh, ...db.data.biliDynamics].filter(
+    (item, index, arr) => arr.findIndex((x) => x.id === item.id) === index
+  )
+  merged.sort((a, b) => b.pubTs - a.pubTs)
+  db.data.biliDynamics = merged.slice(0, 200)
+  await db.write()
+  return [...db.data.biliDynamics]
 }
