@@ -6,6 +6,7 @@ import { IPC_CHANNELS } from '../config/constants'
 import { dragPetWindow, getPetWindow, hidePetWindow, showPetWindow } from '../windows/petWindow'
 import { hideTaskWindow, showTaskWindow, toggleTaskWindow } from '../windows/taskWindow'
 import { showSettingsWindow } from '../windows/settingsWindow'
+import { setSettings } from '../services/storeService'
 
 export function registerWindowIpc(): void {
   ipcMain.on(IPC_CHANNELS.SETTINGS_SHOW, () => showSettingsWindow())
@@ -14,6 +15,13 @@ export function registerWindowIpc(): void {
   // 拖拽宠物
   ipcMain.on(IPC_CHANNELS.WINDOW_DRAG, (_evt, args: { dx: number; dy: number }) => {
     dragPetWindow(args.dx, args.dy)
+  })
+  ipcMain.on(IPC_CHANNELS.WINDOW_SAVE_POSITION, () => {
+    const pet = getPetWindow()
+    if (pet && !pet.isDestroyed()) {
+      const [x, y] = pet.getPosition()
+      void setSettings({ petPosition: { x, y } })
+    }
   })
 
   // 显隐任务面板

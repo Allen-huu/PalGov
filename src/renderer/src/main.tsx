@@ -7,6 +7,7 @@ import { SettingsPage } from './pages/Settings'
 import { QuizPage } from './pages/Quiz'
 import { WrongBookPage } from './pages/WrongBook'
 import { BilibiliPage } from './pages/Bilibili'
+import { ThoughtsPage } from './pages/Thoughts'
 import './styles/global.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -15,6 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes fallback={<div style={{ padding: 32, color: 'var(--text-primary)', background: '#f5f2eb', height: '100%' }}>页面加载失败，请关闭窗口后从托盘重新打开。</div>}>
         <Route path="/" element={<PetPage />} />
         <Route path="/task-panel" element={<TaskPanelPage />} />
+        <Route path="/thoughts" element={<ThoughtsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/quiz" element={<QuizPage />} />
         <Route path="/wrong-book" element={<WrongBookPage />} />

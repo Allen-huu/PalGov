@@ -24,6 +24,11 @@ export function formatTime(ts: number): string {
   return `${hh}:${mm}`
 }
 
+export function formatDateTime(ts: number): string {
+  const d = new Date(ts)
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 /** 中文日期：8月11日 周一 */
 export function formatDateChinese(d: Date = new Date()): string {
   const weekMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']

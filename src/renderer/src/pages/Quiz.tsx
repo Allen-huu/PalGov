@@ -1,27 +1,17 @@
 import React from 'react'
 import { PanelSidebar } from '../components/PanelSidebar'
-import { QuestionBankInfo, QuestionBank, Question, QuizRecord, QuizShortcutConfig, Settings } from '@shared/types'
+import { QuestionBankInfo, QuestionBank, Question, QuizRecord, QuizShortcutConfig, Settings, QuizProgress } from '@shared/types'
 
-const LS_KEY = 'quiz_state'
-
-interface SavedState {
-  bankFileName: string
-  qIndex: number
-  records: QuizRecord[]
-}
+type SavedState = QuizProgress
 
 /** 所有题库的进度映射：bankFileName -> SavedState */
 type AllProgress = Record<string, SavedState>
 
-function loadAllProgress(): AllProgress {
+function loadLegacyProgress(): AllProgress {
   try {
-    const raw = localStorage.getItem(LS_KEY)
+    const raw = localStorage.getItem('quiz_state')
     return raw ? JSON.parse(raw) as AllProgress : {}
   } catch { return {} }
-}
-
-function saveAllProgress(data: AllProgress): void {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(data)) } catch { /* ignore */ }
 }
 
 function isAnswerCorrect(question: Question, userAnswer: number | number[] | string): boolean {
@@ -29,6 +19,10 @@ function isAnswerCorrect(question: Question, userAnswer: number | number[] | str
     const correct = Array.isArray(question.answer) ? [...question.answer].sort() : [question.answer as number]
     const user = Array.isArray(userAnswer) ? [...userAnswer].sort() : [userAnswer as number]
     return correct.length === user.length && correct.every((v, i) => v === user[i])
+  }
+  if (question.type === 'short_answer') {
+    return typeof userAnswer === 'string' && typeof question.answer === 'string' &&
+      userAnswer.trim().toLowerCase() === question.answer.trim().toLowerCase()
   }
   return userAnswer === question.answer
 }
@@ -39,7 +33,7 @@ export const QuizPage: React.FC = () => {
   const [bank, setBank] = React.useState<QuestionBank | null>(null)
   const [bankFileName, setBankFileName] = React.useState('')
   const [qIndex, setQIndex] = React.useState(0)
-  const [selected, setSelected] = React.useState<number | number[] | null>(null)
+  const [selected, setSelected] = React.useState<number | number[] | string | null>(null)
   const [answered, setAnswered] = React.useState(false)
   const [records, setRecords] = React.useState<QuizRecord[]>([])
   const [aiLoading, setAiLoading] = React.useState(false)
@@ -70,15 +64,24 @@ export const QuizPage: React.FC = () => {
   // 自动恢复上次进度
   React.useEffect(() => {
     if (restored || loadingBanks || banks.length === 0) return
-    try {
-      const all = loadAllProgress()
+    void (async () => {
+      try {
+      const legacy = loadLegacyProgress()
+      const stored = await window.pet.quiz.listProgress()
+      const all = { ...legacy, ...stored }
+      const storedNames = new Set(Object.keys(stored))
+      await Promise.all(Object.values(legacy)
+        .filter((entry) => !storedNames.has(entry.bankFileName))
+        .map((entry) => window.pet.quiz.saveProgress(entry)))
+      try { localStorage.removeItem('quiz_state') } catch { /* ignore */ }
+      setAllProgress(all)
       const entries = Object.values(all).filter((e) => e.records.length > 0)
       if (entries.length === 0) { setRestored(true); return }
       // 恢复最后答题的那个题库
       const saved = entries.reduce((a, b) =>
         (a.records[a.records.length - 1]?.answeredAt ?? 0) > (b.records[b.records.length - 1]?.answeredAt ?? 0) ? a : b
       )
-      window.pet.quiz.loadBank(saved.bankFileName).then((b: QuestionBank | null) => {
+      const b = await window.pet.quiz.loadBank(saved.bankFileName)
         if (b) {
           setBank(b)
           setBankFileName(saved.bankFileName)
@@ -87,34 +90,29 @@ export const QuizPage: React.FC = () => {
           const cur = b.questions[Math.min(saved.qIndex, b.questions.length - 1)]
           const prev = (saved.records || []).find((r) => r.questionId === cur.id)
           if (prev) {
-            setSelected(prev.userAnswer as number | number[])
+            setSelected(prev.userAnswer as number | number[] | string)
             setAnswered(true)
             if (prev.aiExplanation) setAiExplanation(prev.aiExplanation)
           }
         }
         setRestored(true)
-      })
-    } catch {
-      setRestored(true)
-    }
+      } catch { setRestored(true) }
+    })()
   }, [loadingBanks, banks])
 
   // 持久化进度
   const persist = (bn: string, idx: number, recs: QuizRecord[]) => {
-    try {
-      const all = loadAllProgress()
-      all[bn] = { bankFileName: bn, qIndex: idx, records: recs }
-      saveAllProgress(all)
-      setAllProgress(all)
-    } catch { /* ignore */ }
+    const progress: SavedState = { bankFileName: bn, qIndex: idx, records: recs }
+    setAllProgress((prev) => ({ ...prev, [bn]: progress }))
+    void window.pet.quiz.saveProgress(progress)
   }
 
   const startFresh = async (fileName: string) => {
-    const all = loadAllProgress()
+    const all = { ...allProgress }
     delete all[fileName]
-    saveAllProgress(all)
     setAllProgress(all)
     setShowResume(null)
+    await window.pet.quiz.deleteProgress(fileName)
     const b = await window.pet.quiz.loadBank(fileName)
     if (b) {
       setBank(b); setBankFileName(fileName); setQIndex(0); setSelected(null); setAnswered(false)
@@ -134,7 +132,7 @@ export const QuizPage: React.FC = () => {
       const cur = b.questions[Math.min(saved.qIndex, b.questions.length - 1)]
       const prev = (saved.records || []).find((r) => r.questionId === cur.id)
       if (prev) {
-        setSelected(prev.userAnswer as number | number[])
+        setSelected(prev.userAnswer as number | number[] | string)
         setAnswered(true)
         if (prev.aiExplanation) setAiExplanation(prev.aiExplanation)
       } else {
@@ -144,7 +142,8 @@ export const QuizPage: React.FC = () => {
   }
 
   const startQuiz = async (fileName: string) => {
-    const all = loadAllProgress()
+    const all = await window.pet.quiz.listProgress()
+    setAllProgress(all)
     const saved = all[fileName]
     if (saved && saved.records.length > 0) {
       setShowResume({ fileName, saved })
@@ -163,7 +162,7 @@ export const QuizPage: React.FC = () => {
     setQIndex(idx); setSelected(null); setAnswered(false); setAiExplanation('')
     const prev = records.find((r) => r.questionId === bank.questions[idx].id)
     if (prev) {
-      setSelected(prev.userAnswer as number | number[])
+      setSelected(prev.userAnswer as number | number[] | string)
       setAnswered(true)
       if (prev.aiExplanation) setAiExplanation(prev.aiExplanation)
     }
@@ -197,7 +196,15 @@ export const QuizPage: React.FC = () => {
     if (!correct) void window.pet.quiz.addWrong(bankFileName, question, selected)
   }
 
-  const saveRecord = (userAnswer: number | number[], correct: boolean) => {
+  const handleShortAnswer = () => {
+    if (answered || !question || question.type !== 'short_answer' || typeof selected !== 'string' || !selected.trim()) return
+    const correct = isAnswerCorrect(question, selected)
+    setAnswered(true)
+    saveRecord(selected, correct)
+    if (!correct) void window.pet.quiz.addWrong(bankFileName, question, selected)
+  }
+
+  const saveRecord = (userAnswer: number | number[] | string, correct: boolean) => {
     if (!question) return
     const existingIdx = records.findIndex((r) => r.questionId === question.id)
     const newRecord: QuizRecord = { questionId: question.id, userAnswer, correct, answeredAt: Date.now() }
@@ -223,7 +230,7 @@ export const QuizPage: React.FC = () => {
     if (!question || aiLoading) return
     setAiLoading(true); setAiExplanation('')
     try {
-      const userAnswer = Array.isArray(selected) ? selected.map((i) => question.options[i]).join('、') : String(question.options[selected as number] ?? selected)
+    const userAnswer = Array.isArray(selected) ? selected.map((i) => question.options[i]).join('、') : String(question.options[selected as number] ?? selected)
       const correctAnswer = Array.isArray(question.answer) ? (question.answer as number[]).map((i) => question.options[i]).join('、') : String(question.options[question.answer as number] ?? question.answer)
       const replacements: Record<string, string> = {
         question: question.question,
@@ -267,15 +274,18 @@ export const QuizPage: React.FC = () => {
           if (isMulti) handleToggleMulti(idx)
           else handleSelect(idx)
         }
-        if (isMulti && (rawKey === ' ' || rawKey === qs.nextQuestion.toUpperCase())) {
+        if (isMulti && (rawKey === ' ' || rawKey.toUpperCase() === qs.nextQuestion.toUpperCase())) {
           e.preventDefault(); handleConfirmMulti()
         }
+        if (question.type === 'short_answer' && rawKey.toUpperCase() === qs.nextQuestion.toUpperCase()) {
+          e.preventDefault(); handleShortAnswer()
+        }
       } else {
-        if (rawKey === qs.nextQuestion.toUpperCase() || e.key === ' ' || e.key === 'ArrowRight') {
+        if (rawKey.toUpperCase() === qs.nextQuestion.toUpperCase() || e.key === ' ' || e.key === 'ArrowRight') {
           e.preventDefault(); handleNext()
         }
       }
-      if (rawKey === qs.prevQuestion.toUpperCase()) {
+      if (rawKey.toUpperCase() === qs.prevQuestion.toUpperCase()) {
         e.preventDefault(); handlePrev()
       }
     }
@@ -285,6 +295,22 @@ export const QuizPage: React.FC = () => {
 
   const renderOptions = () => {
     if (!question) return null
+    if (question.type === 'short_answer') {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <textarea
+            className="input-apple"
+            rows={4}
+            value={typeof selected === 'string' ? selected : ''}
+            disabled={answered}
+            placeholder="输入你的答案…"
+            onChange={(e) => setSelected(e.target.value)}
+            style={{ resize: 'vertical', lineHeight: 1.5 }}
+          />
+          {!answered && <button className="btn-primary" onClick={handleShortAnswer} disabled={typeof selected !== 'string' || !selected.trim()}>提交答案</button>}
+        </div>
+      )
+    }
     return question.options.map((opt, i) => {
       const isCorrectAnswer = Array.isArray(question.answer)
         ? (question.answer as number[]).includes(i)

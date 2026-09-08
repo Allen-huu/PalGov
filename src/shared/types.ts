@@ -71,6 +71,44 @@ export interface Settings {
   biliCookie?: string
 }
 
+/** 工作过程中的念头记录 */
+export interface ThoughtRelation {
+  thoughtId: string
+  summary: string
+  reason: string
+  confidence: number
+}
+
+export interface Thought {
+  id: string
+  rawText: string
+  summary?: string
+  topics?: string[]
+  relatedIds?: string[]
+  relations?: ThoughtRelation[]
+  sourceName?: string
+  aiStatus: 'pending' | 'processing' | 'ready' | 'failed'
+  createdAt: number
+  updatedAt: number
+  archived: boolean
+}
+
+/** MySQL 连接配置。密码只通过设置页传入主进程，不回传到渲染进程。 */
+export interface MySqlConfig {
+  host: string
+  port: number
+  user: string
+  password: string
+  database: string
+  ssl: boolean
+}
+
+export interface MySqlStatus {
+  bound: boolean
+  connected: boolean
+  database?: string
+}
+
 /** 快捷键配置 */
 export interface ShortcutConfig {
   /** 显示/隐藏面板 */
@@ -79,6 +117,33 @@ export interface ShortcutConfig {
   togglePet: string
   /** 打开设置 */
   showSettings: string
+}
+
+/** 默认全局快捷键。用于兼容历史设置中的不完整组合键。 */
+export const DEFAULT_SHORTCUTS: ShortcutConfig = {
+  togglePanel: 'CommandOrControl+Shift+P',
+  togglePet: 'CommandOrControl+Shift+H',
+  showSettings: 'CommandOrControl+Shift+S'
+}
+
+const ACCELERATOR_MODIFIERS = new Set(['CommandOrControl', 'Command', 'Control', 'Ctrl', 'Alt', 'Shift', 'Super'])
+
+/** Electron accelerator 至少需要一个非修饰键。 */
+export function isValidAccelerator(value: unknown): value is string {
+  if (typeof value !== 'string' || !value.trim()) return false
+  const parts = value.split('+').map((part) => part.trim()).filter(Boolean)
+  if (parts.length === 0) return false
+  const key = parts[parts.length - 1]
+  return !ACCELERATOR_MODIFIERS.has(key) && parts.slice(0, -1).every((part) => ACCELERATOR_MODIFIERS.has(part))
+}
+
+/** 对旧配置或不完整配置做字段级回退。 */
+export function normalizeShortcutConfig(value?: Partial<ShortcutConfig> | null): ShortcutConfig {
+  return {
+    togglePanel: isValidAccelerator(value?.togglePanel) ? value.togglePanel : DEFAULT_SHORTCUTS.togglePanel,
+    togglePet: isValidAccelerator(value?.togglePet) ? value.togglePet : DEFAULT_SHORTCUTS.togglePet,
+    showSettings: isValidAccelerator(value?.showSettings) ? value.showSettings : DEFAULT_SHORTCUTS.showSettings
+  }
 }
 
 /** 答题快捷键配置 */
@@ -125,11 +190,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiSendTaskContext: true,
   quizAiPrompt: '请简要解析这道题目：\n\n题目：{question}\n选项：{options}\n正确答案：{correctAnswer}\n我的答案：{userAnswer}\n题目解析：{explanation}\n\n请用 1-2 句话说明对错原因和需要掌握的知识点。',
   petVisible: true,
-  shortcuts: {
-    togglePanel: 'CommandOrControl+Shift+P',
-    togglePet: 'CommandOrControl+Shift+H',
-    showSettings: 'CommandOrControl+Shift+S'
-  },
+  shortcuts: DEFAULT_SHORTCUTS,
   quizShortcuts: {
     selectA: 'A',
     selectB: 'B',
@@ -212,6 +273,12 @@ export interface QuizRecord {
   answeredAt: number
   /** AI 详细解析 */
   aiExplanation?: string
+}
+
+export interface QuizProgress {
+  bankFileName: string
+  qIndex: number
+  records: QuizRecord[]
 }
 
 /** 错题 */

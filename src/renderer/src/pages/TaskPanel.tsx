@@ -5,13 +5,14 @@ import React from 'react'
 import { useTask } from '../hooks/useTask'
 import { TaskItem } from '../components/TaskItem'
 import { PanelSidebar } from '../components/PanelSidebar'
-import { formatDateChinese } from '../utils/date'
+import { formatDateChinese, getTodayDate } from '../utils/date'
 
 export const TaskPanelPage: React.FC = () => {
   const { tasks, loading, create, toggleDone, remove } = useTask()
   const [title, setTitle] = React.useState('')
   const [note, setNote] = React.useState('')
   const [dueTime, setDueTime] = React.useState('')
+  const [dueDate, setDueDate] = React.useState(getTodayDate())
   const [expanded, setExpanded] = React.useState(false)
 
   const pending = tasks.filter((t) => !t.done)
@@ -22,14 +23,16 @@ export const TaskPanelPage: React.FC = () => {
     let dueAt: number | undefined
     if (dueTime) {
       const [h, m] = dueTime.split(':').map(Number)
-      const d = new Date()
+      const d = new Date(`${dueDate}T00:00:00`)
       d.setHours(h, m, 0, 0)
       dueAt = d.getTime()
     }
     await create({ title, note, dueAt })
+    window.pet.anim.sendEvent('taskCreated')
     setTitle('')
     setNote('')
     setDueTime('')
+    setDueDate(getTodayDate())
     setExpanded(false)
   }
 
@@ -63,7 +66,7 @@ export const TaskPanelPage: React.FC = () => {
               {pending.length > 0 && (
                 <div style={s.cardGroup}>
                   {pending.map((t) => (
-                    <TaskItem key={t.id} task={t} onToggle={() => toggleDone(t.id)} onDelete={() => remove(t.id)} />
+                    <TaskItem key={t.id} task={t} onToggle={() => { void toggleDone(t.id); window.pet.anim.sendEvent('taskDone') }} onDelete={() => { void remove(t.id); window.pet.anim.sendEvent('taskDeleted') }} />
                   ))}
                 </div>
               )}
@@ -72,7 +75,7 @@ export const TaskPanelPage: React.FC = () => {
                   <div className="section-title">已完成</div>
                   <div style={s.cardGroup}>
                     {done.map((t) => (
-                      <TaskItem key={t.id} task={t} onToggle={() => toggleDone(t.id)} onDelete={() => remove(t.id)} />
+                    <TaskItem key={t.id} task={t} onToggle={() => { void toggleDone(t.id); window.pet.anim.sendEvent('taskDone') }} onDelete={() => { void remove(t.id); window.pet.anim.sendEvent('taskDeleted') }} />
                     ))}
                   </div>
                 </>
@@ -86,7 +89,10 @@ export const TaskPanelPage: React.FC = () => {
           {expanded && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 6, animation: 'slideUp 0.2s ease' }}>
               <input placeholder="备注（可选）" value={note} onChange={(e) => setNote(e.target.value)} className="input-apple" style={{ width: '100%' }} />
-              <input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} className="input-apple" style={{ width: '100%' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="input-apple" aria-label="备忘日期" />
+                <input type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} className="input-apple" aria-label="备忘时间" />
+              </div>
             </div>
           )}
           <div style={s.inputRow}>

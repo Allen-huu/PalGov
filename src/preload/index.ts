@@ -1,6 +1,6 @@
 ﻿import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 import { IPC_CHANNELS } from '@shared/ipcChannels'
-import { NotifyPayload, Settings, TaskInput, TaskUpdateInput, Question, QuestionBankInfo, QuestionBank, WrongQuestion, BiliUp, BiliDynamic, BiliAddResult } from '@shared/types'
+import { NotifyPayload, Settings, TaskInput, TaskUpdateInput, Question, QuestionBankInfo, QuestionBank, WrongQuestion, BiliUp, BiliDynamic, BiliAddResult, Thought, MySqlConfig, MySqlStatus, QuizProgress } from '@shared/types'
 
 const api = {
   /** 任务相关 */
@@ -32,6 +32,7 @@ const api = {
 
   window: {
     drag: (dx: number, dy: number) => ipcRenderer.send(IPC_CHANNELS.WINDOW_DRAG, { dx, dy }),
+    savePosition: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_SAVE_POSITION),
     togglePanel: () => ipcRenderer.send(IPC_CHANNELS.PET_TOGGLE_PANEL),
     showPanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_SHOW_PANEL),
     hidePanel: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_HIDE_PANEL),
@@ -72,6 +73,14 @@ const api = {
       ipcRenderer.invoke('quiz:listBanks') as Promise<QuestionBankInfo[]>,
     loadBank: (fileName: string) =>
       ipcRenderer.invoke('quiz:loadBank', fileName) as Promise<QuestionBank | null>,
+    renameBank: (fileName: string, name: string) =>
+      ipcRenderer.invoke('quiz:renameBank', { fileName, name }) as Promise<QuestionBankInfo | null>,
+    deleteBank: (fileName: string) =>
+      ipcRenderer.invoke('quiz:deleteBank', fileName) as Promise<boolean>,
+    importBank: () => ipcRenderer.invoke('quiz:importBank') as Promise<QuestionBankInfo | null>,
+    listProgress: () => ipcRenderer.invoke('quiz:listProgress') as Promise<Record<string, QuizProgress>>,
+    saveProgress: (progress: QuizProgress) => ipcRenderer.invoke('quiz:saveProgress', progress) as Promise<void>,
+    deleteProgress: (fileName: string) => ipcRenderer.invoke('quiz:deleteProgress', fileName) as Promise<void>,
     addWrong: (bankFileName: string, question: Question, userAnswer: number | number[] | string) =>
       ipcRenderer.invoke('quiz:addWrong', { bankFileName, question, userAnswer }) as Promise<WrongQuestion>,
     listWrong: () => ipcRenderer.invoke('quiz:listWrong') as Promise<WrongQuestion[]>,
@@ -102,7 +111,23 @@ const api = {
     }
   },
 
+  database: {
+    status: () => ipcRenderer.invoke('database:status') as Promise<MySqlStatus>,
+    config: () => ipcRenderer.invoke('database:config') as Promise<Omit<MySqlConfig, 'password'> & { password: string } | null>,
+    bind: (config: MySqlConfig) => ipcRenderer.invoke('database:bind', config) as Promise<{ ok: boolean; message: string }>,
+    unbind: () => ipcRenderer.invoke('database:unbind') as Promise<void>
+  },
+
+  thoughts: {
+    list: () => ipcRenderer.invoke('thought:list') as Promise<Thought[]>,
+    create: (rawText: string) => ipcRenderer.invoke('thought:create', rawText) as Promise<Thought>,
+    summarize: (id: string) => ipcRenderer.invoke('thought:summarize', id) as Promise<Thought | null>,
+    archive: (id: string) => ipcRenderer.invoke('thought:archive', id) as Promise<Thought | null>,
+    importFile: () => ipcRenderer.invoke('thought:importFile') as Promise<Thought[]>
+  },
+
   anim: {
+    sendEvent: (event: string) => ipcRenderer.send(IPC_CHANNELS.PET_ANIM_EVENT, { event }),
     sendQuizEvent: (event: 'correct' | 'wrong') =>
       ipcRenderer.send(IPC_CHANNELS.PET_ANIM_EVENT, { event }),
     onQuizEvent: (cb: (event: string) => void) => {
@@ -112,11 +137,11 @@ const api = {
         ipcRenderer.removeListener(IPC_CHANNELS.PET_ANIM_EVENT, handler)
       }
     },
-    onSpeech: (cb: (message: string) => void) => {
+    onDialogue: (cb: (message: string) => void) => {
       const handler = (_e: IpcRendererEvent, message: string) => cb(message)
-      ipcRenderer.on(IPC_CHANNELS.PET_SPEECH, handler)
+      ipcRenderer.on(IPC_CHANNELS.PET_DIALOGUE, handler)
       return () => {
-        ipcRenderer.removeListener(IPC_CHANNELS.PET_SPEECH, handler)
+        ipcRenderer.removeListener(IPC_CHANNELS.PET_DIALOGUE, handler)
       }
     }
   }

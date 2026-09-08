@@ -1,6 +1,6 @@
 /**
  * B站动态跟踪服务：轮询已关注 UP 主的动态，发现新动态时
- * 系统通知 + 宠物气泡提醒 + 推送给渲染进程刷新页面
+ * 系统通知 + 宠物对话提醒 + 推送给渲染进程刷新页面
  *
  * 请求层要点：
  * - 动态接口 (feed/space) 需要 WBI 签名（w_rid + wts），否则返回 412 风控页
@@ -10,9 +10,9 @@
 import { Notification, shell, BrowserWindow } from 'electron'
 import { createHash } from 'node:crypto'
 import { IPC_CHANNELS } from '../config/constants'
-import { getPetWindow } from '../windows/petWindow'
 import { getSettings, getBiliUps, saveBiliUp, removeBiliUp, mergeBiliDynamics } from './storeService'
 import { BiliAddResult, BiliUp, BiliDynamic } from '@shared/types'
+import { sendPetDialogue } from './dialogueService'
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
@@ -232,7 +232,9 @@ async function fetchUserInfo(
     throw new Error(data.message || `获取用户信息失败 (${data.code})`)
   }
   // 图床 http 协议在渲染进程可能被拦截，统一转 https
-  const avatar = data.data.card.face?.replace(/^http:\/\//, 'https://')
+  const avatar = data.data.card.face
+    ?.replace(/^http:\/\//, 'https://')
+    .replace(/^\/\//, 'https://')
   return { name: data.data.card.name, avatar }
 }
 
@@ -469,11 +471,8 @@ async function pollOnce(deep = false): Promise<void> {
           sendSystemNotification(d, !settings.notifySound)
         }
       }
-      // 宠物气泡提示
-      const pet = getPetWindow()
-      if (pet && !pet.isDestroyed()) {
-        pet.webContents.send(IPC_CHANNELS.PET_SPEECH, `📢 ${fresh[0].upName} 发布了新动态`)
-      }
+      // B 站动态也进入统一的宠物对话区。
+      void sendPetDialogue('bili', fresh[0].upName)
     }
 
     if (fresh.length > 0 || listChanged) {
@@ -513,6 +512,7 @@ export function stopBiliPolling(): void {
     clearInterval(timer)
     timer = null
   }
+  nextPollAt = null
 }
 
 /** 手动立即刷新一次（深度：回填最近 3 天） */

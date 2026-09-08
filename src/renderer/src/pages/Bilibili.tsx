@@ -8,7 +8,6 @@ import { useRouter } from '../router'
 
 /** B站品牌色（覆盖页面作用域内的 --accent） */
 const BILI_PINK = '#FB7299'
-const BILI_PINK_LIGHT = '#FF8CB4'
 
 function formatTime(ts: number): string {
   const diff = Date.now() - ts * 1000
@@ -240,10 +239,10 @@ export const BilibiliPage: React.FC = () => {
 
 const s: Record<string, React.CSSProperties> = {
   content: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 8px 6px', minWidth: 0 },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, margin: '0 -8px 6px', padding: '7px 10px', background: `linear-gradient(120deg, ${BILI_PINK_LIGHT} 0%, ${BILI_PINK} 55%, #F25D8E 100%)` },
+  header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, margin: '0 -8px 6px', padding: '7px 10px', background: BILI_PINK },
   pollText: { fontSize: 'var(--text-2xs)', color: 'rgba(255,255,255,0.92)', fontWeight: 500, textAlign: 'right' as const, lineHeight: 1.3 },
   addRow: { display: 'flex', gap: 4, marginBottom: 5 },
-  pinkBtn: { background: `linear-gradient(135deg, ${BILI_PINK_LIGHT}, ${BILI_PINK})`, boxShadow: '0 2px 8px rgba(251, 114, 153, 0.35)' },
+  pinkBtn: { background: BILI_PINK, boxShadow: '0 2px 8px rgba(251, 114, 153, 0.35)' },
   message: { fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 4, paddingLeft: 2 },
   errorBanner: { fontSize: 'var(--text-xs)', lineHeight: 1.4, color: '#b45309', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: 'var(--radius-sm)', padding: '4px 8px', marginBottom: 5, wordBreak: 'break-all' },
   upsRow: { display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 6 },

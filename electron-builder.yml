@@ -1,5 +1,5 @@
 appId: com.kpbl.desktoppet
-productName: PetPetGo
+productName: PalGo
 directories:
   buildResources: build
   output: release/${version}
@@ -23,7 +23,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: PetGo
+  shortcutName: PalGo
 mac:
   target:
     - target: dmg

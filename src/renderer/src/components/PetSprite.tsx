@@ -6,7 +6,7 @@
  */
 import React from 'react'
 
-export type PetState = 'idle' | 'happy' | 'alert' | 'dragging' | 'correct' | 'wrong'
+export type PetState = 'idle' | 'happy' | 'alert' | 'dragging' | 'correct' | 'wrong' | 'thirsty' | 'stand' | 'thinking' | 'celebrate'
 
 /** 单个动画配置 */
 interface AnimConfig {
@@ -29,11 +29,15 @@ const MANIFEST: AnimManifest = {
   frameHeight: 110,
   animations: {
     idle:     { file: 'assets/pets/capybara/sprites/idle.png',     frames: 25, fps: 5,  loop: true },
-    happy:    { file: 'assets/pets/capybara/sprites/happy.png',    frames: 25, fps: 12, loop: true },
-    alert:    { file: 'assets/pets/capybara/sprites/alert.png',    frames: 25, fps: 10, loop: true },
+    happy:    { file: '',                                             frames: 1,  fps: 1,  loop: false },
+    alert:    { file: '',                                             frames: 1,  fps: 1,  loop: false },
     dragging: { file: 'assets/pets/capybara/sprites/dragging.png', frames: 25, fps: 12, loop: true },
-    correct:  { file: 'assets/pets/capybara/sprites/correct.png',  frames: 25, fps: 12, loop: false },
+    correct:  { file: '',                                             frames: 1,  fps: 1,  loop: false },
     wrong:    { file: 'assets/pets/capybara/sprites/wrong.png',    frames: 25, fps: 12, loop: false },
+    thirsty:  { file: '',                                             frames: 1,  fps: 1,  loop: false },
+    stand:    { file: '',                                             frames: 1,  fps: 1,  loop: false },
+    thinking: { file: '',                                             frames: 1,  fps: 1,  loop: false },
+    celebrate:{ file: '',                                             frames: 1,  fps: 1,  loop: false },
   }
 }
 
@@ -52,6 +56,10 @@ function useSpriteAnimation(state: PetState): { animStyle: string | null; fallba
   const animName = `pet-sprite-${state}`
 
   React.useEffect(() => {
+    if (!cfg.file) {
+      setFallback(true)
+      return
+    }
     const img = new Image()
     img.onload = () => {
       setFallback(false)
@@ -59,7 +67,7 @@ function useSpriteAnimation(state: PetState): { animStyle: string | null; fallba
     }
     img.onerror = () => setFallback(true)
     img.src = cfg.file
-  }, [state])
+  }, [state, cfg.file, frames, fh, animName])
 
   if (fallback) return { animStyle: null, fallback: true }
 
@@ -118,13 +126,13 @@ export const PetSprite: React.FC<Props> = ({ state, onMouseDown }) => {
 
 /** 水豚噜噜 SVG（精灵图缺失时的兜底） */
 const CapybaraSVG: React.FC<{ state: PetState }> = ({ state }) => (
-  <svg viewBox="0 0 110 110" width="110" height="110" style={{ display: 'block' }}>
+  <svg viewBox="0 0 110 110" width="110" height="110" className={`pet-fallback pet-state-${state}`} style={{ display: 'block' }}>
     <ellipse cx="55" cy="78" rx="38" ry="24" fill="#c4956a" />
     <ellipse cx="55" cy="82" rx="34" ry="16" fill="#b08058" opacity="0.5" />
     <ellipse cx="55" cy="55" rx="28" ry="24" fill="#d4a87c" />
     <ellipse cx="35" cy="40" rx="5" ry="4" fill="#b08058" />
     <ellipse cx="75" cy="40" rx="5" ry="4" fill="#b08058" />
-    {state === 'happy' ? (
+    {state === 'happy' || state === 'correct' || state === 'celebrate' ? (
       <>
         <path d="M46 52 Q50 48 54 52" stroke="#3a2218" strokeWidth="2" fill="none" strokeLinecap="round" />
         <path d="M56 52 Q60 48 64 52" stroke="#3a2218" strokeWidth="2" fill="none" strokeLinecap="round" />

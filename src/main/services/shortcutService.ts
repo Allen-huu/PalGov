@@ -2,8 +2,8 @@
  * 全局快捷键服务：根据设置动态注册/注销快捷键
  */
 import { globalShortcut } from 'electron'
-import { ShortcutConfig } from '@shared/types'
-import { getSettings } from './storeService'
+import { isValidAccelerator, normalizeShortcutConfig, ShortcutConfig } from '@shared/types'
+import { getSettings, setSettings } from './storeService'
 import { toggleTaskWindow } from '../windows/taskWindow'
 import { hidePetWindow, showPetWindow, getPetWindow } from '../windows/petWindow'
 import { showSettingsWindow } from '../windows/settingsWindow'
@@ -13,7 +13,11 @@ let registered: string[] = []
 
 /** 根据设置注册所有全局快捷键 */
 export async function registerShortcuts(): Promise<void> {
-  const { shortcuts } = await getSettings()
+  const settings = await getSettings()
+  const shortcuts = normalizeShortcutConfig(settings.shortcuts)
+  if (JSON.stringify(shortcuts) !== JSON.stringify(settings.shortcuts)) {
+    await setSettings({ shortcuts })
+  }
   applyShortcuts(shortcuts)
 }
 
@@ -28,14 +32,15 @@ export function unregisterAllShortcuts(): void {
 /** 应用新的快捷键配置 */
 export function applyShortcuts(config: ShortcutConfig): void {
   unregisterAllShortcuts()
+  const safeConfig = normalizeShortcutConfig(config)
 
   const actions: Array<{ accelerator: string; action: () => void }> = [
     {
-      accelerator: config.togglePanel,
+      accelerator: safeConfig.togglePanel,
       action: () => toggleTaskWindow()
     },
     {
-      accelerator: config.togglePet,
+      accelerator: safeConfig.togglePet,
       action: () => {
         const pet = getPetWindow()
         if (pet && pet.isVisible()) {
@@ -46,13 +51,16 @@ export function applyShortcuts(config: ShortcutConfig): void {
       }
     },
     {
-      accelerator: config.showSettings,
+      accelerator: safeConfig.showSettings,
       action: () => showSettingsWindow()
     }
   ]
 
   for (const { accelerator, action } of actions) {
-    if (!accelerator) continue
+    if (!isValidAccelerator(accelerator)) {
+      console.warn(`[shortcut] 跳过无效快捷键: ${accelerator}`)
+      continue
+    }
     // 跳过空字符串和重复快捷键
     if (registered.includes(accelerator)) continue
     try {

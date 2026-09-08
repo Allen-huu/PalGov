@@ -26,7 +26,7 @@ export function registerSettingsIpc(): void {
 
     // 快捷键变更时重新注册
     if (patch.shortcuts) {
-      applyShortcuts(patch.shortcuts)
+      applyShortcuts(settings.shortcuts)
     }
 
     // 喝水提醒间隔变更时重启

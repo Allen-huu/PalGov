@@ -4,11 +4,12 @@
 import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
-import { Question, QuestionBank, QuestionBankInfo, WrongQuestion } from '@shared/types'
-import { getWrongQuestions, removeWrongQuestion, saveWrongQuestion } from './storeService'
+import { Question, QuestionBank, QuestionBankInfo, WrongQuestion, QuizProgress } from '@shared/types'
+import { deleteQuizProgress, getWrongQuestions, listQuizProgress, removeWrongQuestion, saveQuizProgress, saveWrongQuestion } from './storeService'
+import { getMySqlPool, queryOne, queryRows, execute } from './mysqlService'
 
 /** 题库目录路径 */
-function getBanksDir(): string {
+export function getBanksDir(): string {
   if (process.env.ELECTRON_RENDERER_URL) {
     // 开发模式：项目 resources/question-banks
     return join(app.getAppPath(), 'resources', 'question-banks')
@@ -19,6 +20,10 @@ function getBanksDir(): string {
 
 /** 获取所有题库列表 */
 export async function listQuestionBanks(): Promise<QuestionBankInfo[]> {
+  if (await getMySqlPool()) {
+    const rows = await queryRows<any[]>('SELECT file_name AS fileName,name,description,JSON_LENGTH(JSON_EXTRACT(payload, \'$.questions\')) AS questionCount FROM question_banks ORDER BY name')
+    return rows.map((row) => ({ ...row, questionCount: Number(row.questionCount) })) as QuestionBankInfo[]
+  }
   try {
     const dir = getBanksDir()
     const files = await readdir(dir)
@@ -46,6 +51,11 @@ export async function listQuestionBanks(): Promise<QuestionBankInfo[]> {
 
 /** 读取指定题库 */
 export async function loadQuestionBank(fileName: string): Promise<QuestionBank | null> {
+  if (await getMySqlPool()) {
+    const row = await queryOne<any[]>('SELECT payload FROM question_banks WHERE file_name=?', [fileName])
+    if (!row) return null
+    return (typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload) as QuestionBank
+  }
   try {
     const dir = getBanksDir()
     const content = await readFile(join(dir, `${fileName}.json`), 'utf-8')
@@ -54,6 +64,39 @@ export async function loadQuestionBank(fileName: string): Promise<QuestionBank |
     return null
   }
 }
+
+export async function importQuestionBank(fileName: string, bank: QuestionBank): Promise<QuestionBankInfo> {
+  const now = Date.now()
+  if (await getMySqlPool()) {
+    await execute('INSERT INTO question_banks (file_name,name,description,payload,created_at,updated_at) VALUES (?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name=VALUES(name),description=VALUES(description),payload=VALUES(payload),updated_at=VALUES(updated_at)', [fileName, bank.name, bank.description ?? '', JSON.stringify(bank), now, now])
+  } else throw new Error('请先绑定 MySQL，再导入题库')
+  return { fileName, name: bank.name, description: bank.description ?? '', questionCount: bank.questions.length }
+}
+
+export async function renameQuestionBank(fileName: string, name: string): Promise<QuestionBankInfo | null> {
+  const bank = await loadQuestionBank(fileName)
+  if (!bank) return null
+  const next = { ...bank, name: name.trim() || bank.name }
+  if (await getMySqlPool()) {
+    await execute('UPDATE question_banks SET name=?,payload=?,updated_at=? WHERE file_name=?', [next.name, JSON.stringify(next), Date.now(), fileName])
+  } else throw new Error('请先绑定 MySQL，再重命名题库')
+  return { fileName, name: next.name, description: next.description ?? '', questionCount: next.questions.length }
+}
+
+export async function deleteQuestionBank(fileName: string): Promise<boolean> {
+  if (!fileName.trim()) return false
+  if (!(await getMySqlPool())) throw new Error('请先绑定 MySQL，再删除题库')
+  const existing = await queryOne<any[]>('SELECT file_name FROM question_banks WHERE file_name=?', [fileName])
+  if (!existing) return false
+  await execute('DELETE FROM question_banks WHERE file_name=?', [fileName])
+  await execute('DELETE FROM quiz_progress WHERE bank_file_name=?', [fileName])
+  await execute('DELETE FROM wrong_questions WHERE bank_file_name=?', [fileName])
+  return true
+}
+
+export const getAllQuizProgress = () => listQuizProgress()
+export const saveQuizProgressRecord = (progress: QuizProgress) => saveQuizProgress(progress)
+export const deleteQuizProgressRecord = (fileName: string) => deleteQuizProgress(fileName)
 
 // 艾宾浩斯记忆曲线间隔：10 分钟, 1 天, 2 天, 4 天, 7 天, 15 天, 30 天
 export const REVIEW_INTERVALS = [10 * 60_000, 24 * 60 * 60_000, 2 * 24 * 60 * 60_000, 4 * 24 * 60 * 60_000, 7 * 24 * 60 * 60_000, 15 * 24 * 60 * 60_000, 30 * 24 * 60 * 60_000]

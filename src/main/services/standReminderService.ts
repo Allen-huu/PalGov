@@ -1,17 +1,6 @@
-/**
- * 站立提醒服务：定时向宠物窗口发送气泡对话
- */
+/** 站立提醒服务：定时触发宠物对话。 */
 import { getSettings } from './storeService'
-import { getPetWindow } from '../windows/petWindow'
-import { IPC_CHANNELS } from '../config/constants'
-
-const MESSAGES = [
-  '🧍 坐太久啦，站起来活动一下吧！',
-  '🦵 噜噜提醒你：该站一站了~',
-  '🚶 久坐伤身，快起来走走',
-  '🙆 伸个懒腰，放松一下肩膀',
-  '🏃 站起来活动5分钟，精力更充沛！',
-]
+import { sendPetDialogue } from './dialogueService'
 
 let timer: ReturnType<typeof setInterval> | null = null
 
@@ -23,11 +12,7 @@ export async function startStandReminder(): Promise<void> {
   if (minutes <= 0) return
 
   timer = setInterval(() => {
-    const pet = getPetWindow()
-    if (pet && !pet.isDestroyed()) {
-      const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)]
-      pet.webContents.send(IPC_CHANNELS.PET_SPEECH, msg)
-    }
+    void sendPetDialogue('stand')
   }, minutes * 60_000)
 }
 

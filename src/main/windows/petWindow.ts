@@ -4,6 +4,7 @@
 import { BrowserWindow, screen } from 'electron'
 import { PET_WINDOW_SIZE } from '../config/constants'
 import { createWindow } from './shared'
+import { getSettings } from '../services/storeService'
 
 let petWindow: BrowserWindow | null = null
 
@@ -14,7 +15,8 @@ export function createPetWindow(): BrowserWindow {
     width: PET_WINDOW_SIZE.width,
     height: PET_WINDOW_SIZE.height,
     extraOptions: {
-      x: sw - PET_WINDOW_SIZE.width - 40,
+      // 扩大透明窗口后，仍让 110px 宠物本体保持原来的右下角位置。
+      x: sw - PET_WINDOW_SIZE.width + (PET_WINDOW_SIZE.width - 110) / 2 - 40,
       y: sh - PET_WINDOW_SIZE.height - 40,
       hasShadow: false,
       maximizable: false,
@@ -26,6 +28,11 @@ export function createPetWindow(): BrowserWindow {
   win.webContents.on('will-navigate', (e) => e.preventDefault())
 
   petWindow = win
+  void getSettings().then((settings) => {
+    if (settings.petPosition && !win.isDestroyed()) {
+      win.setPosition(settings.petPosition.x, settings.petPosition.y)
+    }
+  })
   return win
 }
 

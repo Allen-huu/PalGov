@@ -11,7 +11,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-桌面宠物 × 任务管理 × 刷题复习 × B站动态追踪，全部本地存储，离线可用。
+桌面宠物 × 备忘管理 × 刷题复习 × 念头知识空间 × B站动态追踪。业务数据统一保存到 MySQL，AI 能力按需接入。
 
 </div>
 
@@ -35,16 +35,17 @@
 
 ## 简介
 
-PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻你的桌面右下角。它不只是宠物——双击它会展开一个毛玻璃面板，里面装着你的待办事项、题库练习、错题复习和关注的 B 站 UP 主动态。到点的任务、新发布的动态会通过系统通知推给你，久坐了、该喝水了它也会气泡提醒。
+PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻你的桌面右下角。它不只是宠物——双击它会展开一个毛玻璃面板，里面装着你的备忘、题库练习、错题复习和关注的 B 站 UP 主动态。到点的任务、新发布的动态，以及久坐和喝水提醒，都会通过宠物下方的对话区自然地告诉你。
 
-所有数据保存在本地 JSON 文件中，不依赖任何云服务。
+业务数据默认通过主进程服务写入 MySQL。首次绑定时会把旧的本地数据迁移到 MySQL，并清理旧的 `tasks.json`；AI 请求只在用户配置 API Key 后发送。
 
 ### 核心场景
 
 - **备考刷题**：内置 JSON 题库（教师招聘、事业编、408 等），答题即时判分，答错自动进错题本
 - **记忆巩固**：错题按艾宾浩斯遗忘曲线安排 7 阶段间隔复习（10 分钟 → 30 天）
 - **动态追踪**：关注 B 站 UP 主，新动态实时系统通知
-- **日常待办**：任务管理 + 到点提醒 + 健康（喝水/久坐）提醒
+- **日常备忘**：任务管理 + 到点提醒 + 健康（喝水/久坐）提醒
+- **念头空间**：3D 念头知识图谱，AI 提取摘要、主题和有依据的关联关系
 
 ---
 
@@ -54,9 +55,9 @@ PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻�
 
 | 功能 | 说明 |
 |------|------|
-| 常驻陪伴 | 110×110 透明置顶窗口，可拖拽到屏幕任意位置 |
+| 常驻陪伴 | 透明置顶窗口，可拖拽到屏幕任意位置；宠物下方预留独立对话区 |
 | 帧动画 | 竖排 Sprite Sheet 逐帧动画，6 种状态（待机/开心/警觉/拖拽/答对/答错），加载失败自动降级 SVG |
-| 对话气泡 | 头顶气泡显示提醒内容，4 秒自动消失 |
+| 宠物对话 | 随机主动问候，并结合备忘、念头生成自然口语；喝水、久坐、任务和动态提醒统一由 AI 润色 |
 | 双击交互 | 双击宠物展开/收起任务面板，全快捷键操作 |
 
 ### 任务管理
@@ -66,6 +67,17 @@ PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻�
 | 任务 CRUD | 标题 + 备注 + 到期时间，回车快速添加 |
 | 按日管理 | 任务归属日期，今日待办/已完成数量统计 |
 | 到点提醒 | 30 秒轮询到期任务，系统通知（可带声音）+ 宠物警觉动画 |
+
+### 念头知识空间
+
+| 功能 | 说明 |
+|------|------|
+| 3D 空间 | 使用 Three.js 展示念头晶体、轨道和关系连线，支持拖拽旋转与缩放 |
+| 快速记录 | 底部输入框支持 Enter 保存、Shift+Enter 换行、Cmd/Ctrl+Enter AI 整理 |
+| 文件识别 | 通过输入框左侧加号导入 `.txt` / `.md`，按段落拆分并识别 |
+| AI 关系 | 生成摘要、主题、关联对象、连接理由和置信度；低于 75% 不建立连线 |
+| 关系详情 | 点击节点查看连接到谁、对方简述以及为什么连接 |
+| 数据保存 | 念头、关系和文件来源保存到 MySQL `thoughts` 表 |
 
 ### 刷题练习
 
@@ -100,7 +112,7 @@ PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻�
 |------|------|
 | 添加关注 | 支持空间链接 / UID / b23.tv 短链 |
 | 定时轮询 | 默认 30 秒（15–300 秒可调），WBI 签名 + buvid 指纹绕过风控 |
-| 新动态通知 | 系统通知（点击直达）+ 宠物气泡 + 动态页实时刷新 |
+| 新动态通知 | 系统通知（点击直达）+ 宠物对话区 + 动态页实时刷新 |
 | 历史回填 | 展示最近 3 天动态，按日期分组，启动时自动补齐离线期间缺口 |
 
 ### 系统集成
@@ -109,7 +121,7 @@ PalGo 是一款 Windows 桌面应用：一只名叫「噜噜」的水豚常驻�
 |------|------|
 | 系统托盘 | 显示宠物 / 打开设置 / 退出 |
 | 全局快捷键 | `Ctrl+Shift+P` 面板 · `Ctrl+Shift+H` 宠物 · `Ctrl+Shift+S` 设置（可自定义） |
-| 健康提醒 | 喝水（默认 30 分钟）与久坐站立（默认 60 分钟）气泡提醒 |
+| 健康提醒 | 喝水（默认 30 分钟）与久坐站立（默认 60 分钟）对话提醒 |
 | 开机自启 | 系统托盘常驻，单实例锁 |
 
 ---
@@ -181,15 +193,18 @@ PalGo/
 │   │   │   ├── taskWindow.ts        #   任务面板窗口
 │   │   │   └── settingsWindow.ts    #   设置窗口
 │   │   ├── services/                # 业务服务
-│   │   │   ├── storeService.ts      #   lowdb 持久化
+│   │   │   ├── storeService.ts      #   MySQL / 兼容迁移存储
+│   │   │   ├── mysqlService.ts      #   MySQL 连接、建表和迁移
+│   │   │   ├── thoughtService.ts    #   念头摘要、关系和文件识别
 │   │   │   ├── taskService.ts       #   任务 CRUD
-│   │   │   ├── notifyService.ts     #   任务/喝水/久坐提醒
+│   │   │   ├── notifyService.ts     #   到点任务系统通知
+│   │   │   ├── dialogueService.ts   #   AI 宠物对话与统一提醒
 │   │   │   ├── quizService.ts       #   题库加载 + 错题调度
 │   │   │   ├── aiService.ts         #   AI 接口调用
 │   │   │   ├── bilibiliService.ts   #   B站动态轮询（WBI 签名）
 │   │   │   ├── shortcutService.ts   #   全局快捷键
 │   │   │   └── trayService.ts       #   系统托盘
-│   │   ├── ipc/                     # IPC 处理器
+│   │   ├── ipc/                     # IPC 处理器（数据库 / 念头 / 题库等）
 │   │   └── config/constants.ts      # 常量
 │   │
 │   ├── preload/                     # 🟡 预加载（contextBridge 安全 API）
@@ -200,12 +215,13 @@ PalGo/
 │   │       ├── main.tsx             #   入口
 │   │       ├── router.tsx           #   极简 hash 路由
 │   │       ├── pages/               #   5 个页面
-│   │       │   ├── Pet.tsx          #     宠物页（动画 + 气泡 + 拖拽）
+│   │       │   ├── Pet.tsx          #     宠物页（动画 + 对话 + 拖拽）
 │   │       │   ├── TaskPanel.tsx    #     任务面板
 │   │       │   ├── Quiz.tsx         #     答题页
 │   │       │   ├── WrongBookContent.tsx # 错题复习页
 │   │       │   ├── Bilibili.tsx     #     B站动态页
-│   │       │   └── Settings.tsx     #     设置页
+│   │       │   ├── Settings.tsx     #     设置页（MySQL / 题库管理）
+│   │       │   └── Thoughts.tsx     #     3D 念头知识空间
 │   │       ├── components/          #   共享组件
 │   │       │   ├── PanelSidebar.tsx #     面板侧边栏
 │   │       │   ├── PetSprite.tsx    #     精灵动画
@@ -234,17 +250,18 @@ graph TB
     subgraph Main["主进程 Main Process (Node.js)"]
         WM["窗口管理<br/>宠物 / 面板 / 设置"]
         TS["任务服务"]
-        NS["提醒服务<br/>任务 / 喝水 / 久坐"]
+        NS["提醒服务<br/>到点任务"]
+        DS["宠物对话服务<br/>问候 / 健康提醒 / 动态"]
         QS["题库服务<br/>艾宾浩斯调度"]
         AIS["AI 服务"]
         BS["B站服务<br/>WBI 签名轮询"]
         TR["托盘 / 快捷键"]
-        DB[("lowdb<br/>tasks.json")]
+        DB[("MySQL<br/>tasks / quiz / thoughts / bili")]
     end
 
     subgraph Renderer["渲染进程 (Chromium + React)"]
-        PET["宠物页<br/>动画 / 气泡"]
-        PANEL["任务面板<br/>笔记 / 答题 / 错题 / 动态"]
+        PET["宠物页<br/>动画 / 对话"]
+        PANEL["任务面板<br/>备忘 / 念头 / 答题 / 错题 / 动态"]
         SETTINGS["设置页"]
     end
 
@@ -254,13 +271,14 @@ graph TB
     TS --> DB
     NS -->|定时检查| TS
     BS -->|30s 轮询| BILI["B站 API"]
-    AIS -->|Chat| LLM["DeepSeek / OpenAI 兼容"]
+        AIS -->|Chat| LLM["DeepSeek / OpenAI 兼容"]
+        DS -->|生成内容| AIS
 
     Renderer -->|invoke| PRELOAD
     PRELOAD -->|IPC| Main
 ```
 
-**数据流向**：渲染进程通过 `window.pet.*` 调用 preload 暴露的 API → IPC invoke 到主进程 → 服务层读写 lowdb / 调用外部接口 → 事件推回渲染进程刷新 UI。
+**数据流向**：渲染进程通过 `window.pet.*` 调用 preload 暴露的 API → IPC invoke 到主进程 → 服务层读写 MySQL / 调用外部接口 → 事件推回渲染进程刷新 UI。首次绑定 MySQL 时会迁移旧本地数据并删除旧业务库文件。
 
 ---
 
@@ -276,6 +294,8 @@ graph TB
 | `npm run build:win` | 打包 Windows NSIS 安装包 |
 
 ### 自定义题库
+
+也可以在设置页点击「导入 JSON 题库」，导入后的题库直接保存到 MySQL。设置页支持重命名和删除题库，删除会同步清理该题库的答题进度和错题记录。
 
 在 `resources/question-banks/` 新建 JSON 文件：
 
@@ -304,10 +324,24 @@ graph TB
 2. 放入 `src/renderer/public/assets/sprites/`
 3. 动画加载失败时会自动降级为内置 SVG 水豚
 
+### MySQL 配置
+
+在设置页「MySQL 数据库」中填写主机、端口、用户名、密码和数据库名，点击「测试并绑定」。应用会自动创建数据库和以下表：
+
+- `app_settings`：应用设置
+- `tasks`：备忘任务
+- `question_banks`：题库内容
+- `quiz_progress`：答题进度
+- `wrong_questions`：错题记录
+- `thoughts`：念头、AI 摘要、主题和关系
+- `bili_ups` / `bili_dynamics`：B站关注与动态
+
+密码仅用于主进程建立连接，不会回传到渲染进程。首次成功绑定后，旧的 `%APPDATA%/PalGo/tasks.json` 会自动迁移并删除。
+
 ### 调试技巧
 
 - **打开 DevTools**：在 `src/main/windows/petWindow.ts` 中加 `win.webContents.openDevTools({ mode: 'detach' })`
-- **查看本地数据**：`%APPDATA%/PalGo/tasks.json`（任务 / 设置 / 错题 / B站关注）
+- **查看数据库数据**：使用 MySQL 客户端连接设置页配置的数据库；业务数据不再以 `tasks.json` 作为主存储
 - **验证提醒**：添加一个 1 分钟后到期的任务，30 秒内即可看到系统通知 + 宠物动画
 
 ---
@@ -357,7 +391,7 @@ release/
 <details>
 <summary><b>数据存在哪里？能同步吗？</b></summary>
 
-`%APPDATA%/PalGo/tasks.json` 纯 JSON 文件。暂不支持云同步，手动复制该文件即可迁移设备。
+业务数据保存在设置页绑定的 MySQL 数据库中。换设备时，在新设备安装应用后绑定同一个数据库即可恢复任务、题库、答题进度、错题、念头和 B站数据。连接配置保存在本机用户目录，不会写入数据库。
 
 </details>
 

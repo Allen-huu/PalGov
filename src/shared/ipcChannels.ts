@@ -6,6 +6,7 @@ export const IPC_CHANNELS = {
   TASK_DELETE: 'task:delete',
   TASK_TOGGLE_DONE: 'task:toggleDone',
   WINDOW_DRAG: 'window:drag',
+  WINDOW_SAVE_POSITION: 'window:savePosition',
   WINDOW_HIDE_PANEL: 'window:hidePanel',
   WINDOW_SHOW_PANEL: 'window:showPanel',
   NOTIFY_SHOW: 'notify:show',
@@ -21,8 +22,9 @@ export const IPC_CHANNELS = {
   AI_GET_STATUS: 'ai:getStatus',
   /** 宠物动画事件（答题反馈等） */
   PET_ANIM_EVENT: 'pet:animEvent',
-  /** 宠物对话气泡 */
-  PET_SPEECH: 'pet:speech',
+  /** 宠物对话展示区 */
+  PET_DIALOGUE: 'pet:dialogue',
   /** B站动态更新（主进程 → 渲染进程） */
-  BILI_UPDATE: 'bili:update'
+  BILI_UPDATE: 'bili:update',
+  THOUGHT_UPDATE: 'thought:update'
 } as const

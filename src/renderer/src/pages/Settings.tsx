@@ -1,5 +1,5 @@
 import React from 'react'
-import { Settings, ShortcutConfig, QuizShortcutConfig, BiliUp } from '@shared/types'
+import { Settings, ShortcutConfig, QuizShortcutConfig, BiliUp, MySqlConfig, MySqlStatus, QuestionBankInfo } from '@shared/types'
 
 export const SettingsPage: React.FC = () => {
   const [settings, setSettings] = React.useState<Settings | null>(null)
@@ -17,6 +17,13 @@ export const SettingsPage: React.FC = () => {
   const [biliMsg, setBiliMsg] = React.useState('')
   const [biliUps, setBiliUps] = React.useState<BiliUp[]>([])
   const [biliCookie, setBiliCookie] = React.useState('')
+  const [dbStatus, setDbStatus] = React.useState<MySqlStatus | null>(null)
+  const [dbConfig, setDbConfig] = React.useState<MySqlConfig>({ host: '127.0.0.1', port: 3306, user: 'root', password: '', database: 'palgo', ssl: false })
+  const [dbMessage, setDbMessage] = React.useState('')
+  const [banks, setBanks] = React.useState<QuestionBankInfo[]>([])
+  const [bankMessage, setBankMessage] = React.useState('')
+  const [editingBank, setEditingBank] = React.useState<string | null>(null)
+  const [editingBankName, setEditingBankName] = React.useState('')
 
   React.useEffect(() => { window.pet.settings.get().then((s: Settings) => { setSettings(s); setKey(s.aiApiKey ?? ''); setBiliCookie(s.biliCookie ?? '') }) }, [])
 
@@ -24,6 +31,11 @@ export const SettingsPage: React.FC = () => {
     void window.pet.bili.listUps().then(setBiliUps)
   }, [])
   React.useEffect(() => { refreshBiliUps() }, [refreshBiliUps])
+  React.useEffect(() => {
+    void window.pet.database.status().then(setDbStatus)
+    void window.pet.database.config().then((config) => { if (config) setDbConfig((prev) => ({ ...prev, ...config })) })
+    void window.pet.quiz.listBanks().then(setBanks)
+  }, [])
 
   const update = async (patch: Partial<Settings>) => {
     const next = await window.pet.settings.set(patch)
@@ -77,6 +89,51 @@ export const SettingsPage: React.FC = () => {
     setTesting(false)
   }
 
+  const bindDatabase = async () => {
+    setDbMessage('正在连接…')
+    try {
+      const result = await window.pet.database.bind(dbConfig)
+      setDbMessage(result.message)
+      if (result.ok) setDbStatus(await window.pet.database.status())
+    } catch (error) {
+      setDbMessage(error instanceof Error ? error.message : 'MySQL 连接失败')
+    }
+  }
+
+  const unbindDatabase = async () => {
+    await window.pet.database.unbind()
+    setDbStatus(await window.pet.database.status())
+    setDbMessage('已解除绑定，应用将使用本地回退存储')
+  }
+
+  const importBank = async () => {
+    try {
+      const info = await window.pet.quiz.importBank()
+      if (info) { setBanks((prev) => [...prev.filter((item) => item.fileName !== info.fileName), info]); setBankMessage(`已导入「${info.name}」`) }
+    } catch (error) { setBankMessage(error instanceof Error ? error.message : '题库导入失败') }
+  }
+
+  const renameBank = async (bank: QuestionBankInfo) => {
+    const name = editingBankName.trim()
+    if (!name) return
+    try {
+      const updated = await window.pet.quiz.renameBank(bank.fileName, name)
+      if (updated) {
+        setBanks((prev) => prev.map((item) => item.fileName === bank.fileName ? updated : item))
+        setEditingBank(null)
+        setBankMessage('题库名称已更新')
+      }
+    } catch (error) { setBankMessage(error instanceof Error ? error.message : '题库重命名失败') }
+  }
+
+  const deleteBank = async (bank: QuestionBankInfo) => {
+    if (!window.confirm(`确定删除「${bank.name}」吗？题库、答题进度和错题记录都会被删除。`)) return
+    try {
+      const deleted = await window.pet.quiz.deleteBank(bank.fileName)
+      if (deleted) { setBanks((prev) => prev.filter((item) => item.fileName !== bank.fileName)); setBankMessage(`已删除「${bank.name}」`) }
+    } catch (error) { setBankMessage(error instanceof Error ? error.message : '题库删除失败') }
+  }
+
   /** 开始录制快捷键 */
   const startRecording = (field: keyof ShortcutConfig) => {
     setRecording(field)
@@ -97,7 +154,8 @@ export const SettingsPage: React.FC = () => {
       if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
         parts.push(keyName)
       }
-      if (parts.length >= 2) {
+      // 不能在只按 Ctrl/Command + Shift 等修饰键时保存不完整快捷键。
+      if (parts.length >= 2 && !['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
         const acc = parts.join('+')
         const newShortcuts = { ...settings!.shortcuts, [recording]: acc }
         update({ shortcuts: newShortcuts })
@@ -268,6 +326,38 @@ export const SettingsPage: React.FC = () => {
       <Row label="开机自动启动"><Toggle checked={settings.autoStart} onChange={(v) => update({ autoStart: v })} /></Row>
     </Section>
 
+    <Section title="MySQL 数据库">
+      <Info text="状态" value={dbStatus?.connected ? `已连接 · ${dbStatus.database}` : '未连接'} />
+      <Field label="主机与端口">
+        <div style={s.inline}>
+          <input className="input-apple" value={dbConfig.host} onChange={(e) => setDbConfig({ ...dbConfig, host: e.target.value })} placeholder="127.0.0.1" />
+          <input className="input-apple" type="number" value={dbConfig.port} onChange={(e) => setDbConfig({ ...dbConfig, port: Number(e.target.value) })} style={{ width: 100 }} />
+        </div>
+      </Field>
+      <Field label="用户名与密码">
+        <div style={s.inline}>
+          <input className="input-apple" value={dbConfig.user} onChange={(e) => setDbConfig({ ...dbConfig, user: e.target.value })} placeholder="root" />
+          <input className="input-apple" type="password" value={dbConfig.password} onChange={(e) => setDbConfig({ ...dbConfig, password: e.target.value })} placeholder="密码" />
+        </div>
+      </Field>
+      <Field label="数据库名">
+        <input className="input-apple" value={dbConfig.database} onChange={(e) => setDbConfig({ ...dbConfig, database: e.target.value })} placeholder="palgo" />
+      </Field>
+      <Row label="启用 SSL"><Toggle checked={dbConfig.ssl} onChange={(v) => setDbConfig({ ...dbConfig, ssl: v })} /></Row>
+      <div style={s.inlineBlock}><button className="btn-primary" onClick={bindDatabase}>测试并绑定</button>{dbStatus?.bound && <button className="btn-ghost" onClick={unbindDatabase}>解除绑定</button>}<span style={s.hint}>{dbMessage || '绑定后任务、念头、题库、错题和动态写入 MySQL'}</span></div>
+    </Section>
+
+    <Section title="题库管理">
+      <div style={s.inlineBlock}><button className="btn-primary" onClick={importBank}>导入 JSON 题库</button><span style={s.hint}>{bankMessage || '导入后题库内容保存到数据库，可脱离原始 JSON 使用'}</span></div>
+      {banks.map((bank) => <div key={bank.fileName} style={s.bankRow}>
+        <span style={{ minWidth: 0, flex: 1 }}>
+          {editingBank === bank.fileName ? <input autoFocus className="input-apple" value={editingBankName} onChange={(e) => setEditingBankName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void renameBank(bank); if (e.key === 'Escape') setEditingBank(null) }} /> : <strong className="bank-name">{bank.name}</strong>}
+          <small>{bank.questionCount} 题 · {bank.fileName}</small>
+        </span>
+        {editingBank === bank.fileName ? <><button className="btn-primary btn-sm" disabled={!editingBankName.trim()} onClick={() => void renameBank(bank)}>保存</button><button className="btn-ghost btn-sm" onClick={() => setEditingBank(null)}>取消</button></> : <><button className="btn-ghost btn-sm" onClick={() => { setEditingBank(bank.fileName); setEditingBankName(bank.name); setBankMessage('') }}>重命名</button><button className="btn-danger btn-sm" onClick={() => void deleteBank(bank)}>删除</button></>}
+      </div>)}
+    </Section>
+
     <Section title="喝水提醒">
       <Field label="提醒间隔（分钟，0 为关闭）">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -325,7 +415,10 @@ export const SettingsPage: React.FC = () => {
           {biliUps.map((up) => (
             <div key={up.mid} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 10px', background: 'rgba(118,118,128,0.06)', borderRadius: 'var(--radius-sm)' }}>
               <span style={{ fontSize: 'var(--text-md)' }}>
-                {up.avatar && <img src={up.avatar} alt="" style={{ width: 20, height: 20, borderRadius: '50%', marginRight: 6, verticalAlign: 'middle', objectFit: 'cover' }} />}
+                <span style={{ position: 'relative', display: 'inline-grid', placeItems: 'center', width: 20, height: 20, marginRight: 6, borderRadius: '50%', verticalAlign: 'middle', overflow: 'hidden', background: 'var(--accent-bg)', color: 'var(--accent)', fontSize: 10, fontWeight: 700 }}>
+                  {up.name.slice(0, 1)}
+                  {up.avatar && <img src={up.avatar} alt="" onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
+                </span>
                 {up.name}
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', marginLeft: 6 }}>UID {up.mid}</span>
               </span>
@@ -355,6 +448,8 @@ const s: Record<string, React.CSSProperties> = {
   subtitle: { color: 'var(--text-secondary)', marginTop: 4, fontSize: 'var(--text-md)' },
   status: { color: 'var(--success)', fontSize: 'var(--text-xs)', fontWeight: 500 },
   inline: { display: 'flex', gap: 8, alignItems: 'center', width: '100%' },
+  inlineBlock: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' as const, padding: '12px 16px' },
+  bankRow: { display: 'flex', alignItems: 'center', gap: 8, margin: '0 16px 8px', padding: '9px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(118,118,128,0.06)' },
   hint: { color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' },
   help: { color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)', lineHeight: 1.6, marginTop: 4 },
   sliderValue: { fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--text-primary)', minWidth: 40, textAlign: 'right' },

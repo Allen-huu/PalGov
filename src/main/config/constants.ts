@@ -4,12 +4,12 @@ import { IPC_CHANNELS } from '@shared/ipcChannels'
 export { IPC_CHANNELS }
 
 /** 应用名称 */
-export const APP_NAME = '桌面宠物任务助手'
+export const APP_NAME = 'PalGo'
 
 /** 宠物窗口尺寸 */
 export const PET_WINDOW_SIZE = {
-  width: 110,
-  height: 110
+  width: 220,
+  height: 190
 } as const
 
 /** 任务面板窗口尺寸 */

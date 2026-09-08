@@ -5,6 +5,7 @@ import { BrowserWindow, Notification, shell } from 'electron'
 import { NOTIFY_CHECK_INTERVAL, IPC_CHANNELS } from '../config/constants'
 import { getAllTasks, updateTask, getSettings } from './storeService'
 import { NotifyPayload, Task } from '@shared/types'
+import { sendPetDialogue } from './dialogueService'
 
 let timer: NodeJS.Timeout | null = null
 let petWindow: BrowserWindow | null = null
@@ -34,6 +35,7 @@ async function fireNotify(task: Task): Promise<void> {
     dueAt: task.dueAt
   }
   petWindow?.webContents.send(IPC_CHANNELS.NOTIFY_SHOW, payload)
+  void sendPetDialogue('task', task.title)
 
   await updateTask(task.id, { notified: true })
 }

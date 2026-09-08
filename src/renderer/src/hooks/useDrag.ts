@@ -46,6 +46,10 @@ export function useDrag() {
     }
 
     const onMouseUp = () => {
+      if (draggingRef.current && movedRef.current) {
+        // 只在拖拽结束时写入，避免每个 mousemove 都触发磁盘写入。
+        window.pet.window.savePosition()
+      }
       draggingRef.current = false
       setIsDragging(false)
     }

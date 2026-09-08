@@ -3,7 +3,7 @@
  */
 import React from 'react'
 import { Task } from '@shared/types'
-import { formatTime } from '../utils/date'
+import { formatDateTime } from '../utils/date'
 
 interface Props {
   task: Task
@@ -65,7 +65,7 @@ export const TaskItem: React.FC<Props> = ({ task, onToggle, onDelete }) => {
         )}
         {task.dueAt && (
           <div style={{ fontSize: 'var(--text-sm)', color: 'var(--accent)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span>{formatTime(task.dueAt)}</span>
+            <span>{formatDateTime(task.dueAt)}</span>
           </div>
         )}
       </div>

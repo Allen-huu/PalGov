@@ -11,6 +11,8 @@ import { registerWindowIpc } from './ipc/windowIpc'
 import { registerAIIpc } from './ipc/aiIpc'
 import { registerQuizIpc } from './ipc/quizIpc'
 import { registerBilibiliIpc } from './ipc/bilibiliIpc'
+import { registerThoughtIpc } from './ipc/thoughtIpc'
+import { registerDatabaseIpc } from './ipc/databaseIpc'
 import { bindPetWindow, startNotifyService, stopNotifyService } from './services/notifyService'
 import { createTray, destroyTray } from './services/trayService'
 import { getSettings } from './services/storeService'
@@ -19,6 +21,7 @@ import { registerShortcuts, unregisterAllShortcuts } from './services/shortcutSe
 import { startDrinkReminder, stopDrinkReminder } from './services/drinkReminderService'
 import { startStandReminder, stopStandReminder } from './services/standReminderService'
 import { startBiliPolling, stopBiliPolling } from './services/bilibiliService'
+import { startDialogueService, stopDialogueService } from './services/dialogueService'
 
 // 禁用硬件加速在某些显卡下能让透明窗口更稳定（按需）
 // app.disableHardwareAcceleration()
@@ -50,6 +53,8 @@ app.whenReady().then(async () => {
   registerAIIpc()
   registerQuizIpc()
   registerBilibiliIpc()
+  registerThoughtIpc()
+  registerDatabaseIpc()
 
   // 创建窗口
   const pet = createPetWindow()
@@ -78,6 +83,9 @@ app.whenReady().then(async () => {
 
   // 启动站立提醒
   startStandReminder()
+
+  // 启动随机宠物对话
+  startDialogueService()
 
   // 启动B站动态轮询
   startBiliPolling()
@@ -109,6 +117,7 @@ app.on('before-quit', async () => {
   stopNotifyService()
   stopDrinkReminder()
   stopStandReminder()
+  stopDialogueService()
   stopBiliPolling()
   destroyTray()
   unregisterAllShortcuts()
